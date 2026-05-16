@@ -1,800 +1,524 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Nero AI HUB X</title>
-
-<style>
-:root{
-    --bg:#0b0c10;
-    --panel:#141519;
-    --text:#f1f3f4;
-    --muted:#9aa0a6;
-    --primary:#3b82f6;
-    --accent:#10b981;
-    --border:#2c2d31;
-    --user:#1f2937;
-}
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    font-family:system-ui,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-}
-
-/* TOPBAR */
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:14px 16px;
-    background:var(--panel);
-    border-bottom:1px solid var(--border);
-    z-index:100;
-}
-
-.topbar h1{
-    font-size:18px;
-}
-
-.icon-btn{
-    background:none;
-    border:none;
-    color:var(--muted);
-    cursor:pointer;
-    font-size:20px;
-    transition:.2s;
-}
-
-.icon-btn:hover{
-    color:white;
-}
-
-/* SIDEBAR */
-
-.sidebar{
-    position:fixed;
-    top:0;
-    right:-320px;
-    width:300px;
-    height:100%;
-    background:var(--panel);
-    border-left:1px solid var(--border);
-    transition:.3s;
-    z-index:999;
-    display:flex;
-    flex-direction:column;
-}
-
-.sidebar.open{
-    right:0;
-}
-
-.sidebar-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:16px;
-    border-bottom:1px solid var(--border);
-}
-
-.chat-list{
-    flex:1;
-    overflow-y:auto;
-    padding:10px;
-}
-
-.chat-item{
-    padding:12px;
-    border-radius:12px;
-    cursor:pointer;
-    margin-bottom:8px;
-    transition:.2s;
-    color:var(--muted);
-    background:transparent;
-}
-
-.chat-item:hover,
-.chat-item.active{
-    background:rgba(59,130,246,.12);
-    color:#60a5fa;
-}
-
-/* OVERLAY */
-
-.overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.45);
-    z-index:998;
-    display:none;
-}
-
-.overlay.show{
-    display:block;
-}
-
-/* CHAT */
-
-.chat-box{
-    flex:1;
-    overflow-y:auto;
-    padding:20px 16px;
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-    scroll-behavior:smooth;
-}
-
-.welcome{
-    margin:auto;
-    text-align:center;
-}
-
-.welcome .logo{
-    font-size:55px;
-    margin-bottom:14px;
-}
-
-.welcome h2{
-    font-size:28px;
-    margin-bottom:10px;
-    background:linear-gradient(to left,#60a5fa,#34d399);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-.welcome p{
-    color:var(--muted);
-    line-height:1.7;
-}
-
-/* MESSAGE */
-
-.row{
-    display:flex;
-}
-
-.row.user{
-    justify-content:flex-start;
-}
-
-.row.ai{
-    justify-content:flex-end;
-}
-
-.bubble{
-    max-width:85%;
-    padding:14px;
-    border-radius:18px;
-    line-height:1.7;
-    white-space:pre-wrap;
-    word-break:break-word;
-}
-
-.bubble.user{
-    background:var(--user);
-    border-bottom-right-radius:5px;
-}
-
-.bubble.ai{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-bottom-left-radius:5px;
-}
-
-/* THINKING */
-
-.thinking{
-    margin-bottom:10px;
-    padding:8px 10px;
-    border-right:3px solid var(--primary);
-    background:rgba(59,130,246,.08);
-    color:#60a5fa;
-    border-radius:8px;
-    font-size:13px;
-}
-
-/* IMAGE */
-
-.canvas{
-    overflow:hidden;
-    border-radius:14px;
-    border:1px solid var(--border);
-}
-
-.canvas img{
-    width:100%;
-    display:block;
-}
-
-/* INPUT */
-
-.input-area{
-    padding:14px;
-    border-top:1px solid var(--border);
-    background:var(--bg);
-}
-
-.input-box{
-    display:flex;
-    align-items:flex-end;
-    gap:10px;
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:10px 14px;
-}
-
-textarea{
-    flex:1;
-    background:none;
-    border:none;
-    resize:none;
-    outline:none;
-    color:white;
-    max-height:140px;
-    min-height:24px;
-    font-size:15px;
-    font-family:inherit;
-}
-
-.status{
-    text-align:center;
-    color:#60a5fa;
-    font-size:12px;
-    margin-top:8px;
-    height:16px;
-}
-
-/* MENU */
-
-.mode-menu{
-    position:fixed;
-    bottom:90px;
-    right:16px;
-    width:180px;
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:6px;
-    display:none;
-    flex-direction:column;
-    z-index:1000;
-}
-
-.mode-menu.show{
-    display:flex;
-}
-
-.mode-item{
-    border:none;
-    background:none;
-    color:var(--muted);
-    text-align:right;
-    padding:12px;
-    border-radius:10px;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.mode-item:hover,
-.mode-item.active{
-    background:rgba(59,130,246,.12);
-    color:#60a5fa;
-}
-
-::-webkit-scrollbar{
-    width:6px;
-}
-
-::-webkit-scrollbar-thumb{
-    background:#333;
-    border-radius:20px;
-}
-
-@media(max-width:600px){
-
-    .bubble{
-        max-width:95%;
-    }
-
-    .sidebar{
-        width:85%;
-    }
-}
-</style>
-</head>
-
-<body>
-
-<div class="topbar">
-    <button class="icon-btn" id="newChatBtn">➕</button>
-    <h1>Nero AI HUB X</h1>
-    <button class="icon-btn" id="openSidebarBtn">☰</button>
-</div>
-
-<div class="overlay" id="overlay"></div>
-
-<!-- SIDEBAR -->
-
-<aside class="sidebar" id="sidebar">
-
-    <div class="sidebar-header">
-        <h3>المحادثات</h3>
-        <button class="icon-btn" id="closeSidebarBtn">✖</button>
-    </div>
-
-    <div class="chat-list" id="chatList"></div>
-
-</aside>
-
-<!-- MODE MENU -->
-
-<div class="mode-menu" id="modeMenu">
-
-    <button class="mode-item active" data-mode="prog">
-        💻 خبير البرمجة
-    </button>
-
-    <button class="mode-item" data-mode="think">
-        🧠 التفكير العميق
-    </button>
-
-    <button class="mode-item" data-mode="paint">
-        🎨 الرسام
-    </button>
-
-</div>
-
-<!-- CHAT -->
-
-<div class="chat-box" id="chatBox">
-
-    <div class="welcome" id="welcome">
-
-        <div class="logo">✨</div>
-
-        <h2>Nero AI HUB X</h2>
-
-        <p>
-            نسخة محسنة وأكثر استقرارًا. لأن المتصفحات أصلًا عندها مشاكل نفسية كفاية.
-        </p>
-
-    </div>
-
-</div>
-
-<!-- INPUT -->
-
-<div class="input-area">
-
-    <div class="input-box">
-
-        <button class="icon-btn" id="modeBtn">☰</button>
-
-        <textarea
-            id="promptInput"
-            rows="1"
-            placeholder="اكتب شيئًا..."
-        ></textarea>
-
-        <button class="icon-btn" id="sendBtn">✈</button>
-
-    </div>
-
-    <div class="status" id="status"></div>
-
-</div>
+<script src="https://js.puter.com/v2/"></script>
 
 <script>
+const STORAGE_KEY = "nero_v1_secure";
+const ENCRYPTION_KEY = "NeroFastMode2026";
 
-const STORAGE_KEY = "nero_ai_hub_x";
+let chats = [];
+let currentChatId = null;
 
-const state = {
-    mode: "prog",
-    chats: [],
-    activeChatId: null
-};
+/* =========================
+   ENCRYPTION
+========================= */
 
-/* ELEMENTS */
+function encryptData(data){
 
-const chatBox = document.getElementById("chatBox");
-const promptInput = document.getElementById("promptInput");
-const statusText = document.getElementById("status");
-const overlay = document.getElementById("overlay");
-const sidebar = document.getElementById("sidebar");
-const modeMenu = document.getElementById("modeMenu");
-const chatList = document.getElementById("chatList");
+    try{
 
-/* STORAGE */
+        const str = encodeURIComponent(
+            JSON.stringify(data)
+        );
+
+        let result = "";
+
+        for(let i=0;i<str.length;i++){
+
+            result += String.fromCharCode(
+                str.charCodeAt(i) ^
+                ENCRYPTION_KEY.charCodeAt(
+                    i % ENCRYPTION_KEY.length
+                )
+            );
+        }
+
+        return btoa(result);
+
+    }catch(err){
+
+        return "";
+    }
+}
+
+function decryptData(data){
+
+    try{
+
+        const decoded = atob(data);
+
+        let result = "";
+
+        for(let i=0;i<decoded.length;i++){
+
+            result += String.fromCharCode(
+                decoded.charCodeAt(i) ^
+                ENCRYPTION_KEY.charCodeAt(
+                    i % ENCRYPTION_KEY.length
+                )
+            );
+        }
+
+        return JSON.parse(
+            decodeURIComponent(result)
+        );
+
+    }catch(err){
+
+        return [];
+    }
+}
+
+/* =========================
+   STORAGE
+========================= */
 
 function saveChats(){
+
     localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify(state.chats)
+        encryptData(chats)
     );
+
+    renderChatList();
 }
 
 function loadChats(){
 
-    try{
-        const data = JSON.parse(
-            localStorage.getItem(STORAGE_KEY)
-        );
+    const data =
+        localStorage.getItem(STORAGE_KEY);
 
-        if(Array.isArray(data)){
-            state.chats = data;
-        }
+    if(!data){
 
-    }catch(err){
-        console.error(err);
-        state.chats = [];
+        chats = [];
+        return;
     }
+
+    chats = decryptData(data);
 }
 
-/* CHAT MANAGEMENT */
+/* =========================
+   UI HELPERS
+========================= */
 
-function createChat(title="محادثة جديدة"){
+function closePanels(){
+
+    document
+    .getElementById("sidebar")
+    .classList.remove("open");
+
+    document
+    .getElementById("overlay")
+    .classList.remove("show");
+}
+
+function toggleSidebar(){
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const overlay =
+        document.getElementById("overlay");
+
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("show");
+}
+
+/* =========================
+   CHAT SYSTEM
+========================= */
+
+function createNewChat(secret=false){
 
     const chat = {
+
         id: crypto.randomUUID(),
-        title,
-        messages:[]
+
+        title: secret
+            ? "محادثة مؤقتة ⏱"
+            : "محادثة جديدة",
+
+        messages: [],
+
+        secret,
+
+        createdAt: Date.now()
     };
 
-    state.chats.unshift(chat);
-    state.activeChatId = chat.id;
+    chats.unshift(chat);
+
+    currentChatId = chat.id;
 
     saveChats();
-    renderChats();
 
-    clearChatUI();
+    renderMessages();
 
-    return chat;
+    closePanels();
 }
 
-function getActiveChat(){
-    return state.chats.find(
-        c => c.id === state.activeChatId
+function getCurrentChat(){
+
+    return chats.find(
+        c => c.id === currentChatId
     );
 }
 
-function renderChats(){
+function cleanupTemporaryChats(){
 
-    chatList.innerHTML = "";
+    const now = Date.now();
 
-    state.chats.forEach(chat => {
+    chats = chats.filter(chat => {
 
-        const item = document.createElement("div");
+        if(!chat.secret) return true;
 
-        item.className =
-            "chat-item " +
-            (chat.id === state.activeChatId ? "active":"");
-
-        item.textContent = "💬 " + chat.title;
-
-        item.onclick = () => {
-            state.activeChatId = chat.id;
-            renderMessages(chat);
-            renderChats();
-            closeMenus();
-        };
-
-        chatList.appendChild(item);
+        return (
+            now - chat.createdAt
+            < 15 * 60 * 1000
+        );
     });
+
+    saveChats();
 }
 
-function renderMessages(chat){
+function loadChat(id){
 
-    clearChatUI();
+    currentChatId = id;
 
-    chat.messages.forEach(msg => {
-        appendMessage(msg);
-    });
+    renderMessages();
+
+    renderChatList();
+
+    closePanels();
 }
 
-function clearChatUI(){
+function renderChatList(){
 
-    chatBox.innerHTML = `
-        <div class="welcome" id="welcome">
-            <div class="logo">✨</div>
-            <h2>Nero AI HUB X</h2>
-        </div>
-    `;
-}
+    const list =
+        document.getElementById("chatList");
 
-/* UI */
+    list.innerHTML = "";
 
-function appendMessage(msg){
+    chats.forEach(chat => {
 
-    const welcome =
-        document.getElementById("welcome");
-
-    if(welcome) welcome.remove();
-
-    const row = document.createElement("div");
-    row.className = `row ${msg.role}`;
-
-    const bubble = document.createElement("div");
-    bubble.className = `bubble ${msg.role}`;
-
-    if(msg.thinking){
-
-        const thinking = document.createElement("div");
-
-        thinking.className = "thinking";
-        thinking.textContent = msg.thinking;
-
-        bubble.appendChild(thinking);
-    }
-
-    if(msg.isImage){
-
-        const container =
+        const item =
             document.createElement("div");
 
-        container.className = "canvas";
+        item.className =
+            `chat-item ${
+                currentChatId === chat.id
+                ? "active"
+                : ""
+            }`;
 
-        const img = document.createElement("img");
-        img.src = msg.content;
+        item.innerHTML =
+            `💬 ${chat.title}`;
 
-        container.appendChild(img);
-        bubble.appendChild(container);
+        item.onclick = () =>
+            loadChat(chat.id);
+
+        list.appendChild(item);
+    });
+}
+
+function renderMessages(){
+
+    const box =
+        document.getElementById("chatBox");
+
+    box.innerHTML = "";
+
+    const chat = getCurrentChat();
+
+    if(!chat) return;
+
+    if(chat.messages.length === 0){
+
+        box.innerHTML = `
+        <div style="
+            text-align:center;
+            margin-top:60px;
+            color:var(--text-dim);
+        ">
+            <div style="font-size:50px;">✨</div>
+            <div style="margin-top:12px;">
+                كيف يمكنني مساعدتك؟
+            </div>
+        </div>
+        `;
+
+        return;
+    }
+
+    chat.messages.forEach(msg => {
+
+        appendMessage(
+            msg.role,
+            msg.content,
+            msg.isImage
+        );
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+function appendMessage(
+    role,
+    content,
+    isImage=false
+){
+
+    const box =
+        document.getElementById("chatBox");
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        `message-row ${role}`;
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className =
+        `bubble ${role}`;
+
+    if(isImage){
+
+        bubble.innerHTML = `
+        <div class="canvas-container">
+            <img src="${content}">
+        </div>
+        `;
 
     }else{
 
-        bubble.innerHTML = formatText(msg.content);
+        bubble.innerText = content;
     }
 
     row.appendChild(bubble);
 
-    chatBox.appendChild(row);
+    box.appendChild(row);
 
-    chatBox.scrollTop =
-        chatBox.scrollHeight;
+    box.scrollTop =
+        box.scrollHeight;
 }
 
-/* SIMPLE MARKDOWN */
+/* =========================
+   SEND MESSAGE
+========================= */
 
-function formatText(text){
+function handleEnter(e){
 
-    return text
-        .replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-        .replace(/\n/g,"<br>");
+    if(
+        e.key === "Enter" &&
+        !e.shiftKey
+    ){
+
+        e.preventDefault();
+
+        sendMessage();
+    }
 }
-
-/* MENUS */
-
-function openSidebar(){
-    sidebar.classList.add("open");
-    overlay.classList.add("show");
-}
-
-function closeMenus(){
-    sidebar.classList.remove("open");
-    modeMenu.classList.remove("show");
-    overlay.classList.remove("show");
-}
-
-/* AI ENGINE */
 
 async function sendMessage(){
 
-    const text = promptInput.value.trim();
+    const input =
+        document.getElementById("userInput");
+
+    const text =
+        input.value.trim();
 
     if(!text) return;
 
-    let chat = getActiveChat();
+    if(
+        !currentChatId ||
+        !getCurrentChat()
+    ){
 
-    if(!chat){
-        chat = createChat(
-            text.substring(0,20)
-        );
+        createNewChat();
     }
 
-    const userMsg = {
+    const chat = getCurrentChat();
+
+    if(
+        chat.messages.length === 0 &&
+        !chat.secret
+    ){
+
+        chat.title =
+            text.substring(0,25);
+    }
+
+    chat.messages.push({
         role:"user",
         content:text
-    };
+    });
 
-    chat.messages.push(userMsg);
+    appendMessage(
+        "user",
+        text
+    );
 
-    appendMessage(userMsg);
+    input.value = "";
 
-    promptInput.value = "";
-    autoResize();
+    const status =
+        document.getElementById(
+            "chatStatus"
+        );
 
-    statusText.textContent =
-        "جاري التفكير... لأن البشر يحبون تعقيد كل شيء.";
+    status.innerText =
+        "Nero V1 يفكر... بطريقة ما.";
 
-    if(state.mode === "paint"){
+    try{
 
-        generateImage(text,chat);
+        const history =
+            chat.messages
+            .filter(m => !m.isImage)
+            .map(m => ({
+
+                role:
+                    m.role === "user"
+                    ? "user"
+                    : "assistant",
+
+                content:m.content
+            }));
+
+        const response =
+            await puter.ai.chat(history);
+
+        const reply =
+
+            response?.message?.content?.[0]?.text ||
+
+            response?.text ||
+
+            String(response);
+
+        chat.messages.push({
+
+            role:"ai",
+            content:reply
+        });
+
+        appendMessage(
+            "ai",
+            reply
+        );
+
+        saveChats();
+
+        status.innerText = "";
+
+    }catch(err){
+
+        console.error(err);
+
+        status.innerText =
+            "فشل الاتصال بالخادم.";
+    }
+}
+
+/* =========================
+   IMAGE GENERATION
+========================= */
+
+function drawPicture(){
+
+    const input =
+        document.getElementById("userInput");
+
+    const text =
+        input.value.trim();
+
+    if(!text){
+
+        document
+        .getElementById("chatStatus")
+        .innerText =
+            "اكتب وصف الصورة أولاً.";
+
         return;
     }
 
-    setTimeout(() => {
+    if(
+        !currentChatId ||
+        !getCurrentChat()
+    ){
 
-        let reply = "";
-        let thinking = "";
+        createNewChat();
+    }
 
-        switch(state.mode){
+    const chat = getCurrentChat();
 
-            case "think":
+    appendMessage(
+        "user",
+        text
+    );
 
-                thinking =
-                    "تم تحليل السؤال عبر وضع التفكير العميق.";
+    chat.messages.push({
+        role:"user",
+        content:text
+    });
 
-                reply =
-                    `تحليل ذكي للسؤال:\n\n${text}\n\nتمت المعالجة بنجاح.`;
+    input.value = "";
 
-                break;
+    const status =
+        document.getElementById(
+            "chatStatus"
+        );
 
-            default:
-
-                reply =
-                    `تم استلام طلبك:\n\n"${text}"\n\nوالنظام يعمل بشكل مستقر أخيرًا. معجزة تقنية صغيرة.`;
-        }
-
-        const aiMsg = {
-            role:"ai",
-            content:reply,
-            thinking
-        };
-
-        chat.messages.push(aiMsg);
-
-        appendMessage(aiMsg);
-
-        saveChats();
-
-        statusText.textContent = "";
-
-    },1000);
-}
-
-/* IMAGE MODE */
-
-function generateImage(prompt,chat){
-
-    statusText.textContent =
-        "جاري توليد الصورة...";
+    status.innerText =
+        "جاري رسم الصورة...";
 
     const seed =
-        Math.floor(Math.random()*999999);
+        Math.floor(
+            Math.random() * 999999
+        );
 
     const url =
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${seed}`;
+        `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=1024&height=1024&seed=${seed}`;
 
-    setTimeout(()=>{
+    setTimeout(() => {
 
-        const msg = {
+        appendMessage(
+            "ai",
+            url,
+            true
+        );
+
+        chat.messages.push({
+
             role:"ai",
             content:url,
             isImage:true
-        };
-
-        chat.messages.push(msg);
-
-        appendMessage(msg);
+        });
 
         saveChats();
 
-        statusText.textContent = "";
+        status.innerText = "";
 
     },1500);
 }
 
-/* AUTO RESIZE */
-
-function autoResize(){
-
-    promptInput.style.height = "auto";
-
-    promptInput.style.height =
-        promptInput.scrollHeight + "px";
-}
-
-/* EVENTS */
-
-document
-.getElementById("sendBtn")
-.addEventListener("click",sendMessage);
-
-promptInput.addEventListener("input",autoResize);
-
-promptInput.addEventListener("keydown",e=>{
-
-    if(e.key==="Enter" && !e.shiftKey){
-
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-document
-.getElementById("newChatBtn")
-.addEventListener("click",()=>{
-
-    createChat();
-});
-
-document
-.getElementById("openSidebarBtn")
-.addEventListener("click",openSidebar);
-
-document
-.getElementById("closeSidebarBtn")
-.addEventListener("click",closeMenus);
-
-overlay.addEventListener("click",closeMenus);
-
-document
-.getElementById("modeBtn")
-.addEventListener("click",(e)=>{
-
-    e.stopPropagation();
-
-    modeMenu.classList.toggle("show");
-    overlay.classList.add("show");
-});
-
-document.querySelectorAll(".mode-item")
-.forEach(btn=>{
-
-    btn.addEventListener("click",()=>{
-
-        document
-        .querySelectorAll(".mode-item")
-        .forEach(x=>x.classList.remove("active"));
-
-        btn.classList.add("active");
-
-        state.mode = btn.dataset.mode;
-
-        closeMenus();
-    });
-});
-
-document.addEventListener("keydown",e=>{
-
-    if(e.key==="Escape"){
-        closeMenus();
-    }
-});
-
-/* INIT */
+/* =========================
+   INIT
+========================= */
 
 loadChats();
 
-if(state.chats.length){
+cleanupTemporaryChats();
 
-    state.activeChatId =
-        state.chats[0].id;
+if(chats.length){
 
-    renderMessages(state.chats[0]);
+    currentChatId =
+        chats[0].id;
 
 }else{
 
-    createChat();
+    createNewChat();
 }
 
-renderChats();
+renderMessages();
 
-</script>
+renderChatList();
 
-</body>
-    </html>
+    </script>
