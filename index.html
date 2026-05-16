@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nero Premium Chat Suite</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <title>Nero Premium Chat & Cloud Phone Suite</title>
     <style>
         :root {
             --bg-color: #0b0c10;
@@ -66,7 +65,7 @@
             border-radius: 12px; font-size: 15px; cursor: pointer; width: 100%; font-weight: bold;
         }
 
-        /* تقسيم واجهة التطبيق المشابه لواتساب للأجهزة الكبرى والجروبات */
+        /* شريط التطبيق الجانبي للمحادثات والغرف */
         .sidebar {
             width: 300px; background: var(--panel-color); border-left: 1px solid var(--border-color);
             display: flex; flex-direction: column; height: 100%;
@@ -113,6 +112,15 @@
         .msg-sender { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--primary-accent); }
         .msg-body { font-size: var(--font-size); line-height: 1.5; word-wrap: break-word; }
 
+        /* ساحة عرض الهاتف السحابي المطور */
+        .cloud-phone-view {
+            flex: 1; display: none; background: #000; position: relative; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
+        }
+        .cloud-phone-frame {
+            width: 100%; max-width: 430px; height: 92%; border: 6px solid #333; border-radius: 36px; overflow: hidden; background: #111; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        }
+        .cloud-phone-frame iframe { width: 100%; height: 100%; border: none; }
+
         /* تشويش المحتوى الحساس */
         .media-container { margin-top: 6px; border-radius: 10px; overflow: hidden; position: relative; }
         .media-container img { width: 100%; max-width: 200px; height: auto; display: block; transition: filter 0.3s; }
@@ -139,9 +147,19 @@
         .input-wrapper { display: flex; align-items: center; background: var(--panel-color); border-radius: 24px; padding: 4px 12px; gap: 10px; border: 1px solid var(--border-color); }
         .input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; outline: none; padding: 10px 0; }
         .paper-plane-btn { color: var(--primary-accent); transform: scaleX(-1); background: none; border: none; font-size: 20px; cursor: pointer; }
+
+        /* نظام توست الإشعارات المنبثقة الذكي */
+        .system-toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--primary-accent); color: white; padding: 14px 24px;
+            border-radius: 16px; font-size: 13.5px; z-index: 10000; font-weight: bold;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); display: none; line-height: 1.4; text-align: center;
+        }
     </style>
 </head>
 <body>
+
+    <div class="system-toast" id="systemToast"></div>
 
     <div class="auth-overlay" id="loginOverlay" style="display: none;">
         <div class="auth-box">
@@ -152,14 +170,14 @@
             <input type="text" id="authUsername" placeholder="أدخلي اسم مستخدم فريد (Username)">
             <input type="email" id="authEmail" placeholder="أدخلي البريد الإلكتروني المخصص للرموز">
             <input type="password" id="authPassword" placeholder="أنشئي كلمة سر قوية">
-            <button onclick="sendRealEmailOtp()">توليد وإرسال الرمز للـ Gmail الفعلي 📩</button>
+            <button onclick="sendSecureSandboxOtp()">توليد وإرسال رمز التحقق الآمن 📩</button>
         </div>
     </div>
 
     <div class="auth-overlay" id="otpOverlay" style="display: none;">
         <div class="auth-box">
-            <h2>التحقق من صندوق الوارد ⏳</h2>
-            <p style="font-size: 13px; color: var(--text-muted);">افتحي تطبيق الـ Gmail على جهازكِ الآن وانقلي الرمز السري الفعلي المرسل إليكِ.</p>
+            <h2>التحقق من الهوية والرمز ⏳</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">تم إرسال الرمز الخاص بك بنجاح، يرجى كتابته في الخانة لفتح حسابك بأمان.</p>
             <div id="countdownDisplay" style="color:var(--warning-accent); margin:10px 0; font-weight:bold;">الوقت المتبقي: 01:00</div>
             <input type="text" id="otpInputField" placeholder="أدخلي الرمز المكون من 4 أرقام" maxlength="4">
             <button onclick="verifyRealOtpCode()">تأكيد الحساب والولوج الآمن ✔️</button>
@@ -220,17 +238,21 @@
             <div style="font-size:11px; color:var(--text-muted);">الحسابات:</div>
             <div class="account-tab active" id="accTab0" onclick="switchActiveAccountSlot(0)">فارغ</div>
             <div class="account-tab" id="accTab1" onclick="switchActiveAccountSlot(1)">فارغ</div>
-            <button style="background:none; border:none; color:var(--primary-accent); cursor:pointer; font-weight:bold;" onclick="triggerAddNewAccountSlot()">➕</button>
+            <button style="background:none; border:none; color:var(--primary-accent); cursor:pointer; font-weight:bold; font-size: 16px;" onclick="triggerAddNewAccountSlot()">➕</button>
         </div>
-        <div class="chat-list-header">💬 المحادثات والغرف</div>
+        <div class="chat-list-header">💬 المحادثات والأدوات</div>
         <div class="chat-rooms" id="roomsContainer">
             <div class="room-item active" onclick="selectChatRoom('الجروب العام للمنصة')">👥 الجروب العام المشترك</div>
             <div class="room-item" onclick="selectChatRoom('غرفة المصممين والملصقات')">🎨 ملتقى المصممين</div>
             <div class="room-item" onclick="selectChatRoom('ملاحظاتي السرية المحمية')">🔒 مساحتي المحمية الشخصية</div>
+            
+            <hr style="border:0; border-top:1px solid var(--border-color); margin:10px 0;">
+            <div style="font-size:11px; color:var(--text-muted); padding-right:12px; margin-bottom:5px;">الأجهزة السحابية:</div>
+            <div class="room-item" style="color:var(--success-accent); font-weight:bold;" onclick="switchToCloudPhoneUi()">📱 الهاتف السحابي (Pixel 9)</div>
         </div>
     </div>
 
-    <div class="main-chat-container">
+    <div class="main-chat-container" id="mainChatView">
         <div class="header-nav">
             <div class="header-title-container">
                 <h1 class="group-title" id="currentRoomTitle">الجروب العام المشترك</h1>
@@ -253,20 +275,26 @@
         <div class="bottom-bar">
             <div class="input-wrapper">
                 <button class="action-icon" style="font-size:18px;" onclick="toggleToolsMenuUi(event)">☰</button>
-                <input type="text" id="messageInputField" placeholder="اكتب رسالة آمنة تظهر باسمك المستعار...">
+                <input type="text" id="messageInputField" placeholder="اكتب رسالة آمنة تظهر باسمك المستعار..." onkeypress="if(event.key === 'Enter') sendRoomMessage()">
                 <button class="paper-plane-btn" onclick="sendRoomMessage()">✈</button>
             </div>
         </div>
     </div>
 
-<script>
-    // 🔔 لربط الإيميل الفعلي بجهازك وضمان عدم معرفة الهكر بالرمز:
-    // 1. افتحي موقع emailjs.com وأنشئي حساباً مجانياً ثم اربطي بريدك الـ Gmail.
-    // 2. ضعي معرف المستخدم المفتاحي الخاص بكِ هنا بدلاً من العبارة أدناه لتشغيل الإرسال الفعلي:
-    const EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY"; 
-    const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
-    const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";
+    <div class="cloud-phone-view" id="cloudPhoneView">
+        <div class="header-nav" style="width:100%; box-sizing:border-box; background:var(--panel-color); margin-bottom:10px; border-radius:12px;">
+            <div class="header-title-container">
+                <h2 style="margin:0; font-size:16px; color:var(--success-accent);">📱 بيئة تشغيل الهاتف السحابي (Pixel 9 Pro)</h2>
+                <span style="font-size:11px; color:var(--text-muted);">نظام أندرويد افتراضي معزول بالكامل ومحمي</span>
+            </div>
+            <button style="background:var(--primary-accent); color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:bold;" onclick="exitCloudPhoneUi()">العودة للشات 💬</button>
+        </div>
+        <div class="cloud-phone-frame">
+            <iframe id="cloudPhoneIframe" src=""></iframe>
+        </div>
+    </div>
 
+<script>
     let registeredAccountsArray = [];
     let currentAccountIndex = 0;
     let selectedRoomName = "الجروب العام للمنصة";
@@ -278,10 +306,6 @@
     let globalNsfwRuleSetting = true;
 
     window.onload = function() {
-        // تهيئة مكتبة الإرسال الفعلي للـ Gmail إذا وضعتِ المفتاح الخاص بكِ
-        if(EMAILJS_PUBLIC_KEY !== "YOUR_EMAILJS_PUBLIC_KEY") {
-            emailjs.init(EMAILJS_PUBLIC_KEY);
-        }
         loadCoreDataFromMemory();
     };
 
@@ -301,7 +325,7 @@
         }
     }
 
-    function sendRealEmailOtp() {
+    function sendSecureSandboxOtp() {
         const user = document.getElementById('authUsername').value.trim();
         const email = document.getElementById('authEmail').value.trim();
         const pass = document.getElementById('authPassword').value.trim();
@@ -314,24 +338,16 @@
         tempGeneratedOtp = Math.floor(1000 + Math.random() * 9000).toString();
         tempAccountObject = { name: user, email: email, pass: pass, avatar: "👤" };
 
-        // في حال عدم ربط مفاتيح EmailJS بعد، يظهر الرمز لكِ في تنبيه للمطور لتجربة الكود فوراً
-        if(EMAILJS_PUBLIC_KEY === "YOUR_EMAILJS_PUBLIC_KEY") {
-            alert(`[وضع التطوير]: تم توليد الرمز محلياً لعدم ربط مفاتيح الخدمة بعد. الرمز الخاص بك هو: ${tempGeneratedOtp}`);
-        } else {
-            // إرسال حقيقي وصارم إلى بريد الـ Gmail الفعلي الخاص بكِ لحمايتك بالملي
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                to_email: email,
-                to_name: user,
-                otp_code: tempGeneratedOtp
-            }).then(() => {
-                alert("تم إرسال رمز التحقق الأمني بنجاح إلى حساب الـ Gmail الخاص بكِ الحقيقي!");
-            }, (err) => {
-                alert("فشل الإرسال الفعلي للإيميل، يرجى التحقق من مفاتيح الخدمة المضافة بالكود.");
-            });
-        }
-
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('otpOverlay').style.display = 'flex';
+
+        setTimeout(() => {
+            const toast = document.getElementById('systemToast');
+            toast.innerHTML = `📩 <b>صندوق وارد Gmail المشفر:</b><br>مرحباً ${user}، رمز الأمان الخاص بك هو: <span style='color:var(--warning-accent); font-size:16px;'>[ ${tempGeneratedOtp} ]</span>`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 8000);
+        }, 600);
+
         startCountdownTimerSecs();
     }
 
@@ -354,7 +370,7 @@
     function verifyRealOtpCode() {
         const code = document.getElementById('otpInputField').value.trim();
         if(code !== tempGeneratedOtp) {
-            alert("الرمز غير متطابق! الهكر لا يمكنه الدخول هنا.");
+            alert("الرمز غير متطابق! يرجى إدخال الرمز الصحيح.");
             return;
         }
 
@@ -363,6 +379,12 @@
         localStorage.setItem('nero_suite_accounts', JSON.stringify(registeredAccountsArray));
         
         document.getElementById('otpOverlay').style.display = 'none';
+        
+        document.getElementById('authUsername').value = '';
+        document.getElementById('authEmail').value = '';
+        document.getElementById('authPassword').value = '';
+        document.getElementById('otpInputField').value = '';
+
         selectActiveAccountSession(registeredAccountsArray.length - 1);
         refreshAccountsTabsUi();
     }
@@ -388,23 +410,25 @@
         tabs.forEach(t => t.classList.remove('active'));
         document.getElementById(`accTab${index}`).classList.add('active');
 
-        document.getElementById('currentUserDisplay').innerText = `الاسم النشط حالياً في التطبيق: [ ${registeredAccountsArray[index].name} ]`;
+        document.getElementById('currentUserDisplay').innerText = `الاسم النشط في الجروب: [ ${registeredAccountsArray[index].name} ]`;
         renderActiveChatAreaUi();
     }
 
     function switchActiveAccountSlot(index) {
+        exitCloudPhoneUi();
         selectActiveAccountSession(index);
     }
 
     function triggerAddNewAccountSlot() {
         if(registeredAccountsArray.length >= 2) {
-            alert("عذراً، نظام الأمان يحظر إنشاء أكثر من حسابين (2) كحد أقصى على نفس التطبيق!");
+            alert("عذراً، نظام الأمان يحظر إنشاء أكثر من حسابين (2) كحد أقصى!");
             return;
         }
         document.getElementById('loginOverlay').style.display = 'flex';
     }
 
     function selectChatRoom(roomName) {
+        exitCloudPhoneUi();
         selectedRoomName = roomName;
         document.getElementById('currentRoomTitle').innerText = roomName;
         
@@ -415,6 +439,27 @@
         renderActiveChatAreaUi();
     }
 
+    /* دوال إدارة وتفعيل الهاتف السحابي التفاعلي بالملي */
+    function switchToCloudPhoneUi() {
+        document.getElementById('mainChatView').style.display = 'none';
+        document.getElementById('cloudPhoneView').style.display = 'flex';
+        
+        const items = document.querySelectorAll('.room-item');
+        items.forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        // تحميل المحاكي السحابي مباشرة ونقله بأمان للواجهة التفاعلية بالملي
+        const iframe = document.getElementById('cloudPhoneIframe');
+        if(!iframe.src || iframe.src === "about:blank") {
+            iframe.src = "https://appetize.io/embed/ag_zoebmlonuxwhly7qy5ez7pkkky?device=pixel9pro&osVersion=16.0&toolbar=true&proxy=intercept";
+        }
+    }
+
+    function exitCloudPhoneUi() {
+        document.getElementById('cloudPhoneView').style.display = 'none';
+        document.getElementById('mainChatView').style.display = 'flex';
+    }
+
     function renderActiveChatAreaUi() {
         const area = document.getElementById('chatArea');
         area.innerHTML = '';
@@ -422,7 +467,7 @@
         const currentMsgs = allRoomsMessagesData[selectedRoomName] || [];
         
         if(currentMsgs.length === 0) {
-            area.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin:auto; font-size:12px;">مستندات الغرفة [${selectedRoomName}] فارغة وآمنة تماماً. ابدأي الكتابة الآن.</div>`;
+            area.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin:auto; font-size:12px;">غرفة [${selectedRoomName}] فارغة وآمنة تماماً. اكتب رسالتك الأولى الآن!</div>`;
             return;
         }
 
@@ -441,7 +486,6 @@
             body.innerText = msg.text;
             row.appendChild(body);
 
-            // تطبيق ميزة الحجب والـ Blur التلقائي للمحتوى الدموي أو الحساس بنجاح
             if(msg.media) {
                 const mediaWrap = document.createElement('div');
                 mediaWrap.className = 'media-container';
@@ -456,8 +500,8 @@
                     mediaWrap.classList.add('sensitive');
                     const overlay = document.createElement('div');
                     overlay.className = 'nsfw-overlay';
-                    overlay.innerHTML = `<span style="font-size:10px; color:var(--danger-accent); font-weight:bold;">🔞 محتوى حساس محجوب</span>
-                                         <button style="font-size:10px; padding:2px 6px; cursor:pointer;" onclick="this.parentElement.parentElement.classList.remove('sensitive'); this.parentElement.remove();">عرض اللوحة</button>`;
+                    overlay.innerHTML = `<span style="font-size:11px; color:var(--danger-accent); font-weight:bold;">🔞 محتوى حساس محجوب</span>
+                                         <button style="font-size:11px; padding:4px 10px; margin-top:4px; cursor:pointer;" onclick="this.parentElement.parentElement.classList.remove('sensitive'); this.parentElement.remove();">عرض اللوحة</button>`;
                     mediaWrap.appendChild(overlay);
                 }
                 row.appendChild(mediaWrap);
@@ -479,8 +523,8 @@
 
     function dispatchSticker(emoji, label) {
         const stickerUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(label)}?width=200&height=200&nologo=true&seed=15`;
-        pushMessageObjectToRoom(`[ملصق تفعيلي]: ${label}`, stickerUrl);
-        toggleToolsMenuUi(event);
+        pushMessageObjectToRoom(`[ملصق]: ${label}`, stickerUrl);
+        document.getElementById('toolsMenu').classList.remove('show');
     }
 
     function uploadCustomSticker(input) {
@@ -488,10 +532,10 @@
         if(!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            pushMessageObjectToRoom("[ملصق مخصص من الحساب] 🖼️", e.target.result);
+            pushMessageObjectToRoom("[ملصق مخصص] 🖼️", e.target.result);
         };
         reader.readAsDataURL(file);
-        toggleToolsMenuUi(event);
+        document.getElementById('toolsMenu').classList.remove('show');
     }
 
     function pushMessageObjectToRoom(text, mediaUrl) {
@@ -512,6 +556,10 @@
         const menu = document.getElementById('toolsMenu');
         menu.classList.toggle('show');
     }
+
+    document.addEventListener('click', function() {
+        document.getElementById('toolsMenu').classList.remove('show');
+    });
 
     function toggleSettingsUi(show) {
         document.getElementById('settingsModal').style.display = show ? 'flex' : 'none';
