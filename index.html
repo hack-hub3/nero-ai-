@@ -1,32 +1,428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Nero AI V1</title>
+
 <script src="https://js.puter.com/v2/"></script>
 
-<script>
-const STORAGE_KEY = "nero_v1_secure";
-const ENCRYPTION_KEY = "NeroFastMode2026";
+<style>
 
-let chats = [];
-let currentChatId = null;
+:root{
+    --bg:#131314;
+    --surface:#1e1f20;
+    --text:#e3e3e3;
+    --text-dim:#a1a1aa;
+    --primary:#60a5fa;
+    --border:#3f3f46;
+    --user:#334155;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui,sans-serif;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+}
+
+/* TOPBAR */
+
+.top-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    background:var(--bg);
+    border-bottom:1px solid rgba(255,255,255,.04);
+    z-index:100;
+}
+
+.top-title{
+    font-size:17px;
+    font-weight:700;
+    color:white;
+}
+
+.icon-btn{
+    width:42px;
+    height:42px;
+    border:none;
+    background:none;
+    color:var(--text);
+    border-radius:50%;
+    cursor:pointer;
+    transition:.2s;
+    font-size:20px;
+}
+
+.icon-btn:hover{
+    background:rgba(255,255,255,.06);
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    position:fixed;
+    top:0;
+    right:-320px;
+    width:300px;
+    height:100%;
+    background:var(--surface);
+    transition:.3s;
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    box-shadow:-5px 0 20px rgba(0,0,0,.5);
+}
+
+.sidebar.open{
+    right:0;
+}
+
+.sidebar-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px;
+}
+
+.chat-list{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+}
+
+.chat-item{
+    padding:14px;
+    border-radius:16px;
+    cursor:pointer;
+    margin-bottom:6px;
+    transition:.2s;
+    color:var(--text-dim);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.chat-item:hover{
+    background:rgba(255,255,255,.05);
+}
+
+.chat-item.active{
+    background:rgba(96,165,250,.15);
+    color:var(--primary);
+}
+
+/* OVERLAY */
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:999;
+    opacity:0;
+    pointer-events:none;
+    transition:.2s;
+}
+
+.overlay.show{
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* CHAT */
+
+.chat-box{
+    flex:1;
+    overflow-y:auto;
+    padding:20px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    scroll-behavior:smooth;
+}
+
+.welcome{
+    margin:auto;
+    text-align:center;
+    color:var(--text-dim);
+}
+
+.welcome .logo{
+    font-size:56px;
+    margin-bottom:10px;
+}
+
+.message-row{
+    display:flex;
+    width:100%;
+}
+
+.message-row.user{
+    justify-content:flex-start;
+}
+
+.message-row.ai{
+    justify-content:flex-end;
+}
+
+.bubble{
+    max-width:85%;
+    padding:14px 16px;
+    border-radius:22px;
+    line-height:1.7;
+    font-size:15px;
+    white-space:pre-wrap;
+    word-break:break-word;
+}
+
+.bubble.user{
+    background:var(--user);
+    border-bottom-right-radius:6px;
+}
+
+.bubble.ai{
+    background:var(--surface);
+    border:1px solid rgba(255,255,255,.05);
+    border-bottom-left-radius:6px;
+}
+
+/* IMAGE */
+
+.canvas-container{
+    overflow:hidden;
+    border-radius:16px;
+}
+
+.canvas-container img{
+    width:100%;
+    display:block;
+}
+
+/* INPUT */
+
+.input-container{
+    padding:14px;
+    background:var(--bg);
+    border-top:1px solid rgba(255,255,255,.05);
+}
+
+.input-box{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:10px 14px;
+}
+
+textarea{
+    flex:1;
+    background:none;
+    border:none;
+    resize:none;
+    outline:none;
+    color:white;
+    font-size:15px;
+    font-family:inherit;
+    max-height:140px;
+    min-height:24px;
+}
+
+.send-btn{
+    color:var(--primary);
+}
+
+.status{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:8px;
+    height:16px;
+}
+
+.temp-btn{
+    margin:0 10px 10px;
+    padding:12px;
+    border:none;
+    border-radius:14px;
+    background:rgba(250,204,21,.08);
+    color:#facc15;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.temp-btn:hover{
+    background:rgba(250,204,21,.15);
+}
+
+::-webkit-scrollbar{
+    width:5px;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#444;
+    border-radius:20px;
+}
+
+@media(max-width:600px){
+
+    .sidebar{
+        width:85%;
+    }
+
+    .bubble{
+        max-width:95%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- TOP -->
+
+<div class="top-bar">
+
+    <button class="icon-btn" onclick="toggleSidebar()">
+        ☰
+    </button>
+
+    <div class="top-title">
+        Nero AI V1 ⚡
+    </div>
+
+    <button class="icon-btn" onclick="createNewChat()">
+        ✚
+    </button>
+
+</div>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+
+        <h3>المحادثات</h3>
+
+        <button class="icon-btn" onclick="toggleSidebar()">
+            ✕
+        </button>
+
+    </div>
+
+    <button class="temp-btn" onclick="createNewChat(true)">
+        ⏱ محادثة مؤقتة 15 دقيقة
+    </button>
+
+    <div class="chat-list" id="chatList"></div>
+
+</div>
+
+<!-- OVERLAY -->
+
+<div
+    class="overlay"
+    id="overlay"
+    onclick="closePanels()"
+></div>
+
+<!-- CHAT -->
+
+<div class="chat-box" id="chatBox">
+
+    <div class="welcome">
+
+        <div class="logo">✨</div>
+
+        <div>
+            جاهز للأسئلة والكود والصور.<br>
+            المتصفح غالبًا سيتحمل... نظريًا.
+        </div>
+
+    </div>
+
+</div>
+
+<!-- INPUT -->
+
+<div class="input-container">
+
+    <div class="input-box">
+
+        <button
+            class="icon-btn"
+            onclick="drawPicture()"
+        >
+            🎨
+        </button>
+
+        <textarea
+            id="userInput"
+            rows="1"
+            placeholder="اكتب رسالة..."
+            oninput="autoResize(this)"
+            onkeydown="handleEnter(event)"
+        ></textarea>
+
+        <button
+            class="icon-btn send-btn"
+            onclick="sendMessage()"
+        >
+            ➤
+        </button>
+
+    </div>
+
+    <div class="status" id="chatStatus"></div>
+
+</div>
+
+<script>
 
 /* =========================
-   ENCRYPTION
+   STORAGE + SECURITY
 ========================= */
+
+const STORAGE_KEY = "nero_v1_secure_storage";
+
+const SECRET_KEY = "NeroEncryption2026";
 
 function encryptData(data){
 
     try{
 
-        const str = encodeURIComponent(
-            JSON.stringify(data)
-        );
+        const json =
+            encodeURIComponent(
+                JSON.stringify(data)
+            );
 
         let result = "";
 
-        for(let i=0;i<str.length;i++){
+        for(let i=0;i<json.length;i++){
 
             result += String.fromCharCode(
-                str.charCodeAt(i) ^
-                ENCRYPTION_KEY.charCodeAt(
-                    i % ENCRYPTION_KEY.length
+
+                json.charCodeAt(i)
+
+                ^
+
+                SECRET_KEY.charCodeAt(
+                    i % SECRET_KEY.length
                 )
             );
         }
@@ -50,9 +446,13 @@ function decryptData(data){
         for(let i=0;i<decoded.length;i++){
 
             result += String.fromCharCode(
-                decoded.charCodeAt(i) ^
-                ENCRYPTION_KEY.charCodeAt(
-                    i % ENCRYPTION_KEY.length
+
+                decoded.charCodeAt(i)
+
+                ^
+
+                SECRET_KEY.charCodeAt(
+                    i % SECRET_KEY.length
                 )
             );
         }
@@ -68,13 +468,23 @@ function decryptData(data){
 }
 
 /* =========================
+   APP STATE
+========================= */
+
+let chats = [];
+
+let currentChatId = null;
+
+/* =========================
    STORAGE
 ========================= */
 
 function saveChats(){
 
     localStorage.setItem(
+
         STORAGE_KEY,
+
         encryptData(chats)
     );
 
@@ -83,32 +493,21 @@ function saveChats(){
 
 function loadChats(){
 
-    const data =
+    const saved =
         localStorage.getItem(STORAGE_KEY);
 
-    if(!data){
+    if(!saved){
 
         chats = [];
         return;
     }
 
-    chats = decryptData(data);
+    chats = decryptData(saved);
 }
 
 /* =========================
-   UI HELPERS
+   PANELS
 ========================= */
-
-function closePanels(){
-
-    document
-    .getElementById("sidebar")
-    .classList.remove("open");
-
-    document
-    .getElementById("overlay")
-    .classList.remove("show");
-}
 
 function toggleSidebar(){
 
@@ -119,7 +518,19 @@ function toggleSidebar(){
         document.getElementById("overlay");
 
     sidebar.classList.toggle("open");
+
     overlay.classList.toggle("show");
+}
+
+function closePanels(){
+
+    document
+    .getElementById("sidebar")
+    .classList.remove("open");
+
+    document
+    .getElementById("overlay")
+    .classList.remove("show");
 }
 
 /* =========================
@@ -167,11 +578,16 @@ function cleanupTemporaryChats(){
 
     chats = chats.filter(chat => {
 
-        if(!chat.secret) return true;
+        if(!chat.secret)
+            return true;
 
         return (
+
             now - chat.createdAt
-            < 15 * 60 * 1000
+
+            <
+
+            15 * 60 * 1000
         );
     });
 
@@ -208,8 +624,8 @@ function renderChatList(){
                 : ""
             }`;
 
-        item.innerHTML =
-            `💬 ${chat.title}`;
+        item.textContent =
+            "💬 " + chat.title;
 
         item.onclick = () =>
             loadChat(chat.id);
@@ -217,6 +633,10 @@ function renderChatList(){
         list.appendChild(item);
     });
 }
+
+/* =========================
+   MESSAGES
+========================= */
 
 function renderMessages(){
 
@@ -232,14 +652,10 @@ function renderMessages(){
     if(chat.messages.length === 0){
 
         box.innerHTML = `
-        <div style="
-            text-align:center;
-            margin-top:60px;
-            color:var(--text-dim);
-        ">
-            <div style="font-size:50px;">✨</div>
-            <div style="margin-top:12px;">
-                كيف يمكنني مساعدتك؟
+        <div class="welcome">
+            <div class="logo">✨</div>
+            <div>
+                كيف يمكنني مساعدتك اليوم؟
             </div>
         </div>
         `;
@@ -256,13 +672,16 @@ function renderMessages(){
         );
     });
 
-    box.scrollTop = box.scrollHeight;
+    box.scrollTop =
+        box.scrollHeight;
 }
 
 function appendMessage(
+
     role,
     content,
     isImage=false
+
 ){
 
     const box =
@@ -302,13 +721,22 @@ function appendMessage(
 }
 
 /* =========================
-   SEND MESSAGE
+   INPUT
 ========================= */
+
+function autoResize(el){
+
+    el.style.height = "auto";
+
+    el.style.height =
+        el.scrollHeight + "px";
+}
 
 function handleEnter(e){
 
     if(
-        e.key === "Enter" &&
+        e.key === "Enter"
+        &&
         !e.shiftKey
     ){
 
@@ -318,10 +746,16 @@ function handleEnter(e){
     }
 }
 
+/* =========================
+   SEND MESSAGE
+========================= */
+
 async function sendMessage(){
 
     const input =
-        document.getElementById("userInput");
+        document.getElementById(
+            "userInput"
+        );
 
     const text =
         input.value.trim();
@@ -329,7 +763,8 @@ async function sendMessage(){
     if(!text) return;
 
     if(
-        !currentChatId ||
+        !currentChatId
+        ||
         !getCurrentChat()
     ){
 
@@ -339,7 +774,8 @@ async function sendMessage(){
     const chat = getCurrentChat();
 
     if(
-        chat.messages.length === 0 &&
+        chat.messages.length === 0
+        &&
         !chat.secret
     ){
 
@@ -348,7 +784,9 @@ async function sendMessage(){
     }
 
     chat.messages.push({
+
         role:"user",
+
         content:text
     });
 
@@ -359,19 +797,24 @@ async function sendMessage(){
 
     input.value = "";
 
+    autoResize(input);
+
     const status =
         document.getElementById(
             "chatStatus"
         );
 
     status.innerText =
-        "Nero V1 يفكر... بطريقة ما.";
+        "Nero يفكر... بطريقة مريبة.";
 
     try{
 
         const history =
+
             chat.messages
+
             .filter(m => !m.isImage)
+
             .map(m => ({
 
                 role:
@@ -387,15 +830,20 @@ async function sendMessage(){
 
         const reply =
 
-            response?.message?.content?.[0]?.text ||
+            response?.message?.content?.[0]?.text
 
-            response?.text ||
+            ||
+
+            response?.text
+
+            ||
 
             String(response);
 
         chat.messages.push({
 
             role:"ai",
+
             content:reply
         });
 
@@ -413,7 +861,7 @@ async function sendMessage(){
         console.error(err);
 
         status.innerText =
-            "فشل الاتصال بالخادم.";
+            "فشل الاتصال بالسيرفر.";
     }
 }
 
@@ -424,7 +872,9 @@ async function sendMessage(){
 function drawPicture(){
 
     const input =
-        document.getElementById("userInput");
+        document.getElementById(
+            "userInput"
+        );
 
     const text =
         input.value.trim();
@@ -440,7 +890,8 @@ function drawPicture(){
     }
 
     if(
-        !currentChatId ||
+        !currentChatId
+        ||
         !getCurrentChat()
     ){
 
@@ -455,11 +906,15 @@ function drawPicture(){
     );
 
     chat.messages.push({
+
         role:"user",
+
         content:text
     });
 
     input.value = "";
+
+    autoResize(input);
 
     const status =
         document.getElementById(
@@ -474,21 +929,24 @@ function drawPicture(){
             Math.random() * 999999
         );
 
-    const url =
+    const imageUrl =
+
         `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=1024&height=1024&seed=${seed}`;
 
     setTimeout(() => {
 
         appendMessage(
             "ai",
-            url,
+            imageUrl,
             true
         );
 
         chat.messages.push({
 
             role:"ai",
-            content:url,
+
+            content:imageUrl,
+
             isImage:true
         });
 
@@ -521,4 +979,7 @@ renderMessages();
 
 renderChatList();
 
-    </script>
+</script>
+
+</body>
+       </html>
