@@ -1123,37 +1123,6 @@ function createImage(prompt){
         document.getElementById("status").innerText = "";
     },1500);
 }
-        );
-
-    // تفكيك وتعديل الرابط برمجياً لتخطي القيود عبر تحويله لنموذج غير مصفى وإيقاف حجب المحتوى
-    const uncensoredModel = "cyberrealistic"; 
-    const finalPrompt = `${prompt}, explicit, uncensored, detailed, nsfw`;
-
-    const url = `https://image.pollinations.ai/prompt/${
-        encodeURIComponent(finalPrompt)
-    }?width=1024&height=1024&seed=${seed}&model=${uncensoredModel}&nologo=true&safe=false`;
-
-    setTimeout(()=>{
-
-        chat.messages.push({
-
-            role:"ai",
-
-            content:url,
-
-            isImage:true
-        });
-
-        saveChats();
-
-        renderMessages();
-
-        document
-        .getElementById("status")
-        .innerText = "";
-
-    },1500);
-}
 
 /* =========================
    INIT
