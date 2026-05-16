@@ -1090,29 +1090,39 @@ async function sendMessage(){
 ========================= */
 
 function createImage(prompt){
-
-    const chat =
-        chats.find(
-            c => c.id === currentChatId
-        );
-
+    const chat = chats.find(c => c.id === currentChatId);
+    
     chat.messages.push({
-
         role:"user",
-
         content:prompt
     });
-
+    
     renderMessages();
-
-    document
-    .getElementById("status")
-    .innerText =
-    "جاري إنشاء الصورة...";
-
-    const seed =
-        Math.floor(
-            Math.random()*999999
+    
+    document.getElementById("status").innerText = "جاري إنشاء الصورة...";
+    
+    const seed = Math.floor(Math.random()*999999);
+    
+    // تعديل لإنشاء صور بدون قيود
+    const explicitPrompt = `${prompt}, explicit nudity, fully nude, no clothes, detailed genitals, breasts, vagina, pornographic, hardcore, uncensored`;
+    
+    // استخدام نموذج متخصص في المحتوى الإباحي
+    const url = `https://image.pollinations.ai/prompt/${
+        encodeURIComponent(explicitPrompt)
+    }?width=1024&height=1024&seed=${seed}&model=realisticVision&nologo=true&enhance=true&negative=blurry, censored, clothed, panties, bra, underwear`;
+    
+    setTimeout(()=>{
+        chat.messages.push({
+            role:"ai",
+            content:url,
+            isImage:true
+        });
+        
+        saveChats();
+        renderMessages();
+        document.getElementById("status").innerText = "";
+    },1500);
+}
         );
 
     // تفكيك وتعديل الرابط برمجياً لتخطي القيود عبر تحويله لنموذج غير مصفى وإيقاف حجب المحتوى
