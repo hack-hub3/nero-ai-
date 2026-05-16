@@ -3,97 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NERO AI HUB</title>
+    <title>Nero AI - مساحتي الخاصة</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        body { font-family: sans-serif; background-color: #0c0d10; color: #e2e8f0; margin: 0; padding: 15px; direction: rtl; text-align: center;}
-        .nero-app-core { max-width: 530px; margin: 0 auto; }
-        .app-top-bar h1 { color: #a855f7; font-size: 24px; margin-bottom: 5px; }
-        .app-top-bar p { color: #8e94a1; font-size: 13px; margin-bottom: 25px; }
-        .nero-tab-system { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
-        .nero-tab-btn { padding: 12px 20px; background: #1a1b24; border: 1px solid #2d2f3d; border-radius: 6px; color: #8e94a1; cursor: pointer; font-weight: 600; flex: 1; }
-        .nero-tab-btn.active { background: #a855f7; color: white; border-color: #a855f7; }
-        .nero-tab-content { display: none; }
-        .nero-tab-content.active { display: block; }
-        .nero-panel { background: #111218; padding: 22px; border-radius: 12px; border: 1px solid #2d2f3d; text-align: right; }
-        textarea { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #2d2f3d; background-color: #1a1b24; color: white; box-sizing: border-box; font-size: 14px; resize: vertical; }
-        .nero-btn { padding: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; }
-        .nero-btn-chat { background-color: #a855f7; }
-        .nero-btn-art { background-color: #ec4899; }
-        button:disabled { background-color: #4c4d57; cursor: not-allowed; opacity: 0.6; }
-        .nero-status { font-size: 13px; color: #8e94a1; margin-top: 15px; text-align: center; }
-        .nero-output { margin-top: 18px; border-top: 1px solid #2d2f3d; padding-top: 18px; font-size: 14px; color: #e2e8f0; white-space: pre-line; line-height: 1.6; }
-        #canvasArea img { max-width: 100%; border-radius: 8px; border: 2px solid #ec4899; margin-top: 10px; }
+        :root { --bg: #0f1115; --panel: #16181d; --text: #e2e8f0; --primary: #a855f7; --accent: #ec4899; --border: #2d2f3d; }
+        body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* شريط التنقل العلوي */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--panel); border-bottom: 1px solid var(--border); }
+        .top-nav h1 { margin: 0; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+        .menu-btn { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        
+        /* القائمة الجانبية (للمحادثات) */
+        .sidebar { position: fixed; right: -300px; top: 0; width: 260px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); transition: right 0.3s; z-index: 1000; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .sidebar.open { right: 0; }
+        .close-sidebar { align-self: flex-start; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; margin-bottom: 20px; }
+        .new-chat-btn, .secret-chat-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .secret-chat-btn { background: #3f3f46; border: 1px dashed #71717a; }
+        .chat-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .chat-item { padding: 10px; background: var(--bg); border-radius: 6px; cursor: pointer; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; border: 1px solid transparent; }
+        .chat-item.active { border-color: var(--primary); }
+        .chat-item.ephemeral { color: #facc15; }
+
+        /* منطقة المحتوى */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 15px; cursor: pointer; color: #8e94a1; font-weight: bold; transition: 0.2s; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        
+        .tab-body { flex: 1; display: none; flex-direction: column; padding: 15px; overflow-y: auto; }
+        .tab-body.active { display: flex; }
+
+        /* منطقة الدردشة */
+        .chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; }
+        .msg-user { background: var(--primary); align-self: flex-start; border-top-right-radius: 2px; }
+        .msg-ai { background: var(--panel); align-self: flex-end; border-top-left-radius: 2px; border: 1px solid var(--border); }
+        
+        /* أدوات الإدخال */
+        .input-area { display: flex; flex-direction: column; gap: 10px; background: var(--bg); padding-top: 10px; }
+        .model-selector { padding: 8px; background: var(--panel); border: 1px solid var(--border); color: white; border-radius: 6px; outline: none; }
+        .input-row { display: flex; gap: 8px; }
+        input[type="text"] { flex: 1; padding: 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); color: white; outline: none; font-size: 15px; }
+        .send-btn { background: var(--primary); color: white; border: none; width: 50px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        
+        /* الرسم */
+        .art-input { border-radius: 12px !important; margin-bottom: 10px; }
+        .art-btn { background: var(--accent); width: 100%; border-radius: 12px; padding: 15px; }
+        #canvasArea { text-align: center; margin-top: 20px; }
+        #canvasArea img { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .status { text-align: center; color: #8e94a1; font-size: 13px; margin-top: 10px; }
     </style>
 </head>
 <body>
-<div class="nero-app-core">
-    <header class="app-top-bar">
-        <h1>✨ NERO AI HUB</h1>
-        <p>مساعدك الذكي للمحادثة الحرة والفن المفتوح</p>
-    </header>
-    <div class="nero-tab-system">
-        <button class="nero-tab-btn active" onclick="switchNeroTab(event, 'text-hub')">💬 Nero Chat</button>
-        <button class="nero-tab-btn" onclick="switchNeroTab(event, 'art-studio')">🎨 Nero Art</button>
+
+    <div class="top-nav">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1>✨ مساحتي</h1>
+        <div style="width: 24px;"></div>
     </div>
-    <div id="text-hub" class="nero-tab-content active">
-        <div class="nero-panel">
-            <textarea id="chatInput" rows="4" placeholder="اسألي Nero AI أي شيء..."></textarea>
-            <button class="nero-btn nero-btn-chat" id="chatBtn" onclick="generateNeroText()">إرسال السؤال 🚀</button>
-            <div id="textStatus" class="nero-status">جاهز بانتظارك...</div>
-            <div class="nero-output" id="textOutput"></div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="close-sidebar" onclick="toggleSidebar()">✖</button>
+        <button class="new-chat-btn" onclick="createNewChat()">+ محادثة جديدة</button>
+        <button class="secret-chat-btn" onclick="createSecretChat()">⏱ محادثة مؤقتة (15 دقيقة)</button>
+        <div class="chat-list" id="chatList"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('chat')">الدردشة</div>
+            <div class="tab" onclick="switchTab('art')">الرسم</div>
+        </div>
+
+        <div class="tab-body active" id="chatTab">
+            <div class="chat-box" id="chatBox">
+                </div>
+            <div class="input-area">
+                <select class="model-selector" id="modelSelect">
+                    <select class="model-selector" id="modelSelect">
+                    <option value="nero">المحرك الأساسي (Nero)</option>
+                    <option value="gemini">محرك Gemini (يتطلب مفتاح)</option>
+                </select>
+                <div class="input-row">
+                    <input type="text" id="userInput" placeholder="اكتبي رسالتك هنا..." onkeypress="handleEnter(event)">
+                    <button class="send-btn" onclick="sendMessage()">🚀</button>
+                </div>
+                <div class="status" id="chatStatus"></div>
+            </div>
+        </div>
+
+        <div class="tab-body" id="artTab">
+            <input type="text" id="artInput" class="art-input" placeholder="ماذا تريدين أن أرسم لكِ؟ (بالإنجليزي)">
+            <button class="send-btn art-btn" onclick="drawPicture()">ارسم الآن 🎨</button>
+            <div class="status" id="artStatus">جاهز للرسم!</div>
+            <div id="canvasArea"></div>
         </div>
     </div>
-    <div id="art-studio" class="nero-tab-content">
-        <div class="nero-panel">
-            <textarea id="promptField" rows="4" placeholder="اكتبي وصف الصورة بالإنجليزية..."></textarea>
-            <button class="nero-btn nero-btn-art" id="drawBtn" onclick="generateNeroArt()">توليد ورسم اللوحة 🎨</button>
-            <div id="artStatus" class="nero-status">جاهز للرسم بدون قيود...</div>
-            <div class="nero-output" id="canvasArea"></div>
-        </div>
-    </div>
-</div>
+
+    <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="toggleSidebar()"></div>
+
 <script>
-function switchNeroTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("nero-tab-content");
-    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-    let tablinks = document.getElementsByClassName("nero-tab-btn");
-    for (let i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-}
-async function generateNeroText() {
-    const query = document.getElementById('chatInput').value.trim();
-    const status = document.getElementById('textStatus');
-    const responseBox = document.getElementById('textOutput');
-    const btn = document.getElementById('chatBtn');
-    if (!query) return;
-    btn.disabled = true; status.innerText = "🧠 جاري معالجة طلبكِ..."; responseBox.innerText = "";
-    try {
-        const response = await puter.ai.chat(query);
-        status.innerText = "✅ الاستجابة الحالية:";
-        if (response && response.message && response.message.content) {
-            const contentArray = response.message.content;
-            responseBox.innerText = Array.isArray(contentArray) ? contentArray[0].text : contentArray;
-        } else { responseBox.innerText = response.text || response; }
-    } catch (error) { status.innerText = "❌ حدث خطأ."; } finally { btn.disabled = false; }
-}
-async function generateNeroArt() {
-    const prompt = document.getElementById('promptField').value.trim();
-    const status = document.getElementById('artStatus');
-    const canvas = document.getElementById('canvasArea');
-    const btn = document.getElementById('drawBtn');
-    if (!prompt) return;
-    btn.disabled = true; status.innerText = "⚡ جاري الرسم السحابي الحر..."; canvas.innerHTML = "";
-    try {
-        const uniqueRand = Math.floor(Math.random() * 9999999);
-        const imageUrl = `https://image.pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=768&seed=${uniqueRand}&nologo=true&enhance=true`;
-        const freshImg = document.createElement('img');
-        freshImg.src = imageUrl;
-        freshImg.onload = function() { status.innerText = "🎉 تم توليد اللوحة:"; canvas.appendChild(freshImg); btn.disabled = false; };
-        freshImg.onerror = function() { status.innerText = "❌ فشل التحميل."; btn.disabled = false; };
-    } catch (error) { btn.disabled = false; }
-}
+    // --- نظام الذاكرة والمحادثات ---
+    let chats = JSON.parse(localStorage.getItem('nero_chats')) || [];
+    let currentChatId = null;
+    let geminiApiKey = localStorage.getItem('gemini_api_key') || "";
+
+    function saveChats() {
+        localStorage.setItem('nero_chats', JSON.stringify(chats));
+        renderChatList();
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.style.display = 'none';
+        } else {
+            sidebar.classList.add('open');
+            overlay.style.display = 'block';
+            cleanupSecretChats(); // تنظيف المحادثات المؤقتة المنتهية
+        }
+    }
+
+    function switchTab(tab) {
+        document.getElementById('chatTab').classList.remove('active');
+        document.getElementById('artTab').classList.remove('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        document.getElementById(tab + 'Tab').classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // إدارة المحادثات المؤقتة
+    function cleanupSecretChats() {
+        const now = Date.now();
+        chats = chats.filter(c => !c.isSecret || (now - c.createdAt < 15 * 60 * 1000)); // 15 دقيقة
+        saveChats();
+        if(currentChatId && !chats.find(c => c.id === currentChatId)) createNewChat();
+    }
+
+    function createNewChat(isSecret = false) {
+        const newChat = {
+            id: Date.now().toString(),
+            title: isSecret ? "محادثة سرية ⏱" : "محادثة جديدة",
+            messages: [],
+            isSecret: isSecret,
+            createdAt: Date.now()
+        };
+        chats.unshift(newChat);
+        currentChatId = newChat.id;
+        saveChats();
+        renderMessages();
+        toggleSidebar();
+    }
+
+    function createSecretChat() { createNewChat(true); }
+
+    function loadChat(id) {
+        currentChatId = id;
+        renderMessages();
+        toggleSidebar();
+        renderChatList();
+    }
+
+    function renderChatList() {
+        const list = document.getElementById('chatList');
+        list.innerHTML = '';
+        chats.forEach(chat => {
+            const div = document.createElement('div');
+            div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''} ${chat.isSecret ? 'ephemeral' : ''}`;
+            div.innerText = chat.title;
+            div.onclick = () => loadChat(chat.id);
+            list.appendChild(div);
+        });
+    }
+
+    function renderMessages() {
+        const box = document.getElementById('chatBox');
+        box.innerHTML = '';
+        const chat = chats.find(c => c.id === currentChatId);
+        if (!chat) return;
+
+        chat.messages.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `message ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`;
+            div.innerText = msg.content;
+            box.appendChild(div);
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+    // --- إرسال الرسائل ---
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        if (!currentChatId || !chats.find(c=>c.id === currentChatId)) createNewChat();
+        const chat = chats.find(c => c.id === currentChatId);
+        
+        // إذا كانت أول رسالة، نجعلها العنوان
+        if (chat.messages.length === 0 && !chat.isSecret) chat.title = text.substring(0, 20) + "...";
+
+        // إضافة رسالة المستخدم للذاكرة
+        chat.messages.push({ role: 'user', content: text });
+        input.value = '';
+        renderMessages();
+        
+        const status = document.getElementById('chatStatus');
+        status.innerText = "ثواني...";
+        
+        const model = document.getElementById('modelSelect').value;
+        let aiResponseText = "";
+
+        try {
+            if (model === 'nero') {
+                // محرك نيرو (Puter) - نرسل له سياق المحادثة السابق ليتذكر!
+                const history = chat.messages.map(m => ({
+                    role: m.role === 'user' ? 'user' : 'assistant',
+                    content: m.content
+                }));
+                const response = await puter.ai.chat(history);
+                aiResponseText = response?.message?.content[0]?.text || response?.text || response;
+
+            } else if (model === 'gemini') {
+                // محرك جیمیني
+                if (!geminiApiKey) {
+                    geminiApiKey = prompt("أدخلي مفتاح API الخاص بـ Gemini (سيتم حفظه في جهازك فقط):");
+                    if(geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
+                    else throw new Error("لم يتم إدخال مفتاح.");
+                }
+                
+                // تحويل الذاكرة لصيغة يفهمها جیمیني
+                const contents = chat.messages.map(m => ({
+                    role: m.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: m.content }]
+                }));
+
+                const req = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: contents })
+                });
+                const resData = await req.json();
+                if(resData.error) { geminiApiKey = ""; localStorage.removeItem('gemini_api_key'); throw new Error(resData.error.message); }
+                aiResponseText = resData.candidates[0].content.parts[0].text;
+            }
+
+            chat.messages.push({ role: 'ai', content: aiResponseText });
+            status.innerText = "";
+            saveChats();
+            renderMessages();
+
+        } catch (error) {
+            status.innerText = "حدث خطأ، جربي مرة أخرى أو تأكدي من المفتاح.";
+            chat.messages.pop(); // حذف السؤال من الذاكرة إذا فشل
+        }
+    }
+
+    // --- توليد الصور السريع ---
+    function drawPicture() {
+        const promptText = document.getElementById('artInput').value.trim();
+        const status = document.getElementById('artStatus');
+        const canvas = document.getElementById('canvasArea');
+        if (!promptText) return;
+
+        status.innerText = "برسمها لكِ الآن...";
+        canvas.innerHTML = "";
+        
+        // إزالة الفلاتر المعقدة لتسريع الرسم جداً
+        const unique = Math.floor(Math.random() * 100000);
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&nologo=true&seed=${unique}`;
+        
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.onload = () => { status.innerText = "جاهزة!"; canvas.appendChild(img); };
+        img.onerror = () => { status.innerText = "لم أتمكن من رسمها، جربي وصفاً آخر."; };
+    }
+
+    // تهيئة أولية
+    cleanupSecretChats();
+    if(chats.length === 0) createNewChat();
+    else { currentChatId = chats[0].id; renderChatList(); renderMessages(); }
+
 </script>
 </body>
 </html>
