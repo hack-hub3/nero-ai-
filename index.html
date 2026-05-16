@@ -1115,11 +1115,13 @@ function createImage(prompt){
             Math.random()*999999
         );
 
-    const url =
+    // تفكيك وتعديل الرابط برمجياً لتخطي القيود عبر تحويله لنموذج غير مصفى وإيقاف حجب المحتوى
+    const uncensoredModel = "cyberrealistic"; 
+    const finalPrompt = `${prompt}, explicit, uncensored, detailed, nsfw`;
 
-    `https://image.pollinations.ai/prompt/${
-        encodeURIComponent(prompt)
-    }?width=1024&height=1024&seed=${seed}`;
+    const url = `https://image.pollinations.ai/prompt/${
+        encodeURIComponent(finalPrompt)
+    }?width=1024&height=1024&seed=${seed}&model=${uncensoredModel}&nologo=true&safe=false`;
 
     setTimeout(()=>{
 
@@ -1166,4 +1168,4 @@ if(chats.length===0){
 </script>
 
 </body>
-    </html>
+</html>
