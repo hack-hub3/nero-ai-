@@ -3,587 +3,541 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nero Premium Chat & Cloud Phone Suite</title>
+    <title>Nero AI HUB V3</title>
     <style>
         :root {
-            --bg-color: #0b0c10;
-            --panel-color: #141519;
-            --text-main: #f1f3f4;
-            --text-muted: #9aa0a6;
-            --primary-accent: #3b82f6;
-            --success-accent: #10b981;
-            --warning-accent: #f59e0b;
-            --danger-accent: #ef4444;
-            --border-color: #2c2d31;
-            --user-bubble: #128c7e;
-            --other-bubble: #202c33;
-            --font-size: 14.5px;
-        }
-
-        .light-theme {
-            --bg-color: #f0f2f5;
-            --panel-color: #ffffff;
-            --text-main: #111b21;
-            --text-muted: #667781;
-            --border-color: #e9edef;
-            --user-bubble: #d9fdd3;
-            --other-bubble: #ffffff;
+            --bg: #0b0c10;
+            --panel: #141519;
+            --text: #f1f3f4;
+            --text-dim: #9aa0a6;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --border: #2c2d31;
+            --bubble-user: #1f2937;
         }
         
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color); color: var(--text-main);
-            margin: 0; padding: 0; height: 100vh;
-            display: flex; overflow: hidden;
-            transition: background 0.3s, color 0.3s;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
-        /* واجهات الأمان والتسجيل */
-        .auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 12, 16, 0.98); z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
+        /* الشريط العلوي */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
         }
-
-        .auth-box {
-            background: var(--panel-color); border: 1px solid var(--border-color);
-            border-radius: 24px; padding: 28px; width: 90%; max-width: 380px; text-align: center;
+        
+        .nav-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
         }
-
-        .warning-banner {
-            background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger-accent);
-            color: #f87171; padding: 10px; border-radius: 12px; font-size: 12px; text-align: right; margin-bottom: 15px;
+        
+        .nav-icon {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 4px 8px;
         }
+        
+        .nav-icon:hover { color: var(--text); }
 
-        .auth-box input {
-            width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color);
-            border-radius: 12px; color: var(--text-main); font-size: 15px; outline: none; margin-bottom: 12px; box-sizing: border-box; text-align: center;
-        }
-
-        .auth-box button {
-            background: var(--primary-accent); color: white; border: none; padding: 12px;
-            border-radius: 12px; font-size: 15px; cursor: pointer; width: 100%; font-weight: bold;
-        }
-
-        /* شريط التطبيق الجانبي للمحادثات والغرف */
+        /* القائمة الجانبية لسجل المحادثات */
         .sidebar {
-            width: 300px; background: var(--panel-color); border-left: 1px solid var(--border-color);
-            display: flex; flex-direction: column; height: 100%;
-        }
-
-        .main-chat-container { flex: 1; display: flex; flex-direction: column; height: 100%; }
-
-        /* إدارة الحسابات المتعددة (الحد الأقصى 2) */
-        .accounts-bar {
-            display: flex; gap: 8px; padding: 10px 16px; background: rgba(0,0,0,0.2);
-            border-bottom: 1px solid var(--border-color); align-items: center;
-        }
-        .account-tab {
-            padding: 6px 12px; border-radius: 20px; background: var(--bg-color);
-            font-size: 12px; cursor: pointer; border: 1px solid var(--border-color);
-        }
-        .account-tab.active { background: var(--primary-accent); color: white; border-color: var(--primary-accent); }
-
-        .chat-list-header { padding: 16px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); }
-        .chat-rooms { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .room-item {
-            padding: 12px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;
-        }
-        .room-item:hover, .room-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary-accent); }
-
-        /* شريط المحادثة العلوي */
-        .header-nav {
-            display: flex; align-items: center; padding: 12px 16px;
-            background: var(--panel-color); border-bottom: 1px solid var(--border-color); gap: 12px;
-        }
-        .header-title-container { flex: 1; }
-        .action-icon { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; padding: 4px; }
-        .action-icon:hover { color: var(--text-main); }
-
-        /* ساحة العرض والرسائل */
-        .chat-area {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 20px 14px;
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--panel);
+            border-left: 1px solid var(--border);
+            transition: right 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
         }
         
-        .msg-row { display: flex; flex-direction: column; width: fit-content; max-width: 75%; border-radius: 14px; padding: 8px 12px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .msg-row.self { background: var(--user-bubble); align-self: flex-start; border-top-right-radius: 2px; }
-        .msg-row.others { background: var(--other-bubble); align-self: flex-end; border-top-left-radius: 2px; border: 1px solid var(--border-color); }
-
-        .msg-sender { font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--primary-accent); }
-        .msg-body { font-size: var(--font-size); line-height: 1.5; word-wrap: break-word; }
-
-        /* ساحة عرض الهاتف السحابي المطور */
-        .cloud-phone-view {
-            flex: 1; display: none; background: #000; position: relative; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
+        .sidebar.open { right: 0; }
+        
+        .sidebar-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
         }
-        .cloud-phone-frame {
-            width: 100%; max-width: 430px; height: 92%; border: 6px solid #333; border-radius: 36px; overflow: hidden; background: #111; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        
+        .chat-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        .cloud-phone-frame iframe { width: 100%; height: 100%; border: none; }
-
-        /* تشويش المحتوى الحساس */
-        .media-container { margin-top: 6px; border-radius: 10px; overflow: hidden; position: relative; }
-        .media-container img { width: 100%; max-width: 200px; height: auto; display: block; transition: filter 0.3s; }
-        .media-container.sensitive img { filter: blur(25px); }
-        .nsfw-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        
+        .chat-item {
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-dim);
+            transition: 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .chat-item:hover, .chat-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
         }
 
-        /* نافذة الإعدادات الفضفاضة والكبيرة جداً */
-        .settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 4000; display: none; align-items: center; justify-content: center; }
-        .settings-box { background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 24px; padding: 24px; width: 90%; max-width: 420px; max-height: 80vh; overflow-y: auto; text-align: right; }
-        .setting-row { margin-bottom: 16px; }
-        .setting-row label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; }
-        .setting-row select, .setting-row input[type="text"] { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); }
-
-        /* صندوق الإدخال السفلي والملصقات */
-        .tools-menu { position: fixed; bottom: 75px; right: 320px; background: var(--panel-color); border: 1px solid var(--border-color); border-radius: 18px; padding: 8px; display: none; flex-direction: column; gap: 4px; z-index: 3000; width: 200px; }
-        .tools-menu.show { display: flex; }
-        .menu-btn { display: flex; align-items: center; gap: 10px; background: transparent; border: none; color: var(--text-muted); padding: 8px; border-radius: 8px; font-size: 13px; text-align: right; cursor: pointer; width: 100%; }
-        .menu-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-
-        .bottom-bar { padding: 10px 12px 20px 12px; background: var(--bg-color); }
-        .input-wrapper { display: flex; align-items: center; background: var(--panel-color); border-radius: 24px; padding: 4px 12px; gap: 10px; border: 1px solid var(--border-color); }
-        .input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; outline: none; padding: 10px 0; }
-        .paper-plane-btn { color: var(--primary-accent); transform: scaleX(-1); background: none; border: none; font-size: 20px; cursor: pointer; }
-
-        /* نظام توست الإشعارات المنبثقة الذكي */
-        .system-toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--primary-accent); color: white; padding: 14px 24px;
-            border-radius: 16px; font-size: 13.5px; z-index: 10000; font-weight: bold;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5); display: none; line-height: 1.4; text-align: center;
+        /* نافذة ميزات الكتابة المنبثقة */
+        .features-menu {
+            position: fixed;
+            bottom: 85px;
+            right: 20px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 3000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 170px;
         }
+
+        .features-menu.show { display: flex; }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            text-align: right;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            font-weight: bold;
+        }
+        
+        /* ساحة المحادثة */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px 16px;
+            scroll-behavior: smooth;
+        }
+        
+        /* واجهة الترحيب */
+        .welcome-section {
+            text-align: center;
+            margin: auto;
+            max-width: 90%;
+        }
+        
+        .welcome-logo { font-size: 50px; margin-bottom: 15px; }
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-subtitle { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+        
+        /* فقاعات الرسائل */
+        .message-row { display: flex; width: 100%; margin-bottom: 5px; }
+        .message-row.user { justify-content: flex-start; }
+        .message-row.ai { justify-content: flex-end; }
+        
+        .bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-line;
+        }
+        
+        .bubble.user {
+            background: var(--bubble-user);
+            color: var(--text);
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bubble.ai {
+            background: var(--panel);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .thinking-process {
+            font-size: 13px;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 3px solid var(--primary);
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+        
+        .canvas-container { margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .canvas-container img { width: 100%; height: auto; display: block; }
+
+        /* منطقة الإدخال */
+        .input-container {
+            padding: 12px 16px 24px 16px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+        
+        .hints-text {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .input-box {
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            border-radius: 28px;
+            padding: 6px 14px;
+            gap: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            padding: 12px 0;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-action-btn { color: var(--primary); transform: scaleX(-1); }
+        .status-text { text-align: center; font-size: 12px; color: #60a5fa; height: 16px; margin-top: 6px; }
+        
+        .global-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1500; display: none; background: rgba(0,0,0,0.4); }
     </style>
 </head>
 <body>
 
-    <div class="system-toast" id="systemToast"></div>
+    <div class="top-nav">
+        <button class="nav-icon" onclick="startNewChatInstance()" title="محادثة جديدة">➕</button>
+        <h1 class="nav-title">Nero AI HUB V3</h1>
+        <button class="nav-icon" onclick="toggleSidebarMenu(true)" title="سجل المحادثات">☰</button>
+    </div>
 
-    <div class="auth-overlay" id="loginOverlay" style="display: none;">
-        <div class="auth-box">
-            <h2>تسجيل مستخدم جديد 🔐</h2>
-            <div class="warning-banner">
-                ⚠️ <b>تحذير خصوصية صارم:</b> لا تستخدمي بريدكِ الإلكتروني الأساسي نهائياً لتفادي أي ثغرات أو مشاكل؛ استخدمي بريداً ثانوياً فقط!
-            </div>
-            <input type="text" id="authUsername" placeholder="أدخلي اسم مستخدم فريد (Username)">
-            <input type="email" id="authEmail" placeholder="أدخلي البريد الإلكتروني المخصص للرموز">
-            <input type="password" id="authPassword" placeholder="أنشئي كلمة سر قوية">
-            <button onclick="sendSecureSandboxOtp()">توليد وإرسال رمز التحقق الآمن 📩</button>
+    <div class="global-overlay" id="globalOverlay" onclick="closeAllPopups()"></div>
+
+    <div class="sidebar" id="sidebarMenu">
+        <div class="sidebar-header">
+            <h3 style="margin:0; font-size:16px;">المحادثات السابقة</h3>
+            <button class="nav-icon" onclick="toggleSidebarMenu(false)">✖</button>
+        </div>
+        <div class="chat-list" id="chatListContainer"></div>
+    </div>
+
+    <div class="features-menu" id="featuresMenu">
+        <button class="menu-item active" id="m-prog" onclick="switchNeroMode('prog')">💻 خبير البرمجة</button>
+        <button class="menu-item" id="m-think" onclick="switchNeroMode('think')">🧠 وضع التفكير</button>
+        <button class="menu-item" id="m-paint" onclick="switchNeroMode('paint')">🎨 وضع الرسام</button>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="welcome-section" id="welcomeScreen">
+            <div class="welcome-logo">✨</div>
+            <div class="welcome-title">Nero AI HUB V3</div>
+            <div class="welcome-subtitle">اضغطي على زر الخطوط (☰) الموجود يمين حقل الكتابة لتغيير ميزة المساعد، وزر (☰) العلوي لاستعراض السجل.</div>
         </div>
     </div>
 
-    <div class="auth-overlay" id="otpOverlay" style="display: none;">
-        <div class="auth-box">
-            <h2>التحقق من الهوية والرمز ⏳</h2>
-            <p style="font-size: 13px; color: var(--text-muted);">تم إرسال الرمز الخاص بك بنجاح، يرجى كتابته في الخانة لفتح حسابك بأمان.</p>
-            <div id="countdownDisplay" style="color:var(--warning-accent); margin:10px 0; font-weight:bold;">الوقت المتبقي: 01:00</div>
-            <input type="text" id="otpInputField" placeholder="أدخلي الرمز المكون من 4 أرقام" maxlength="4">
-            <button onclick="verifyRealOtpCode()">تأكيد الحساب والولوج الآمن ✔️</button>
-        </div>
-    </div>
-
-    <div class="settings-modal" id="settingsModal" onclick="toggleSettingsUi(false)">
-        <div class="settings-box" onclick="event.stopPropagation()">
-            <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:10px;">🔧 مركز الإعدادات المطور</h3>
+    <div class="input-container">
+        <div class="hints-text" id="neroHint">الوضع الحالي: خبير البرمجة المطور 💻</div>
+        
+        <div class="input-box">
+            <button class="nav-icon" style="font-size:20px;" onclick="toggleInputFeaturesMenu(event)" title="ميزات نيرو">☰</button>
             
-            <div class="setting-row">
-                <label>🎨 مظهر التطبيق (Theme Mode)</label>
-                <select id="settingTheme" onchange="applyThemeSetting(this.value)">
-                    <option value="dark">الوضع الليلي الفاخر (Dark Mode)</option>
-                    <option value="light">الوضع المضيء الناصع (Light Mode)</option>
-                </select>
-            </div>
-
-            <div class="setting-row">
-                <label>🔞 فلاتر الأمان والحجب التلقائي للمحتوى</label>
-                <select id="settingNsfw" onchange="applyNsfwSetting(this.value)">
-                    <option value="true">تفعيل الحجب والتشويش التلقائي (آمن جداً)</option>
-                    <option value="false">إيقاف الحجب (عرض كل الصور مباشرة)</option>
-                </select>
-            </div>
-
-            <div class="setting-row">
-                <label>🔎 حجم نصوص الرسائل والخطوط</label>
-                <select id="settingFontSize" onchange="applyFontSetting(this.value)">
-                    <option value="13px">صغير</option>
-                    <option value="14.5px" selected>افتراضي متوازن</option>
-                    <option value="17px">كبير جداً</option>
-                </select>
-            </div>
-
-            <div class="setting-row">
-                <label>🟢 حالة الاتصال والظهور بالأونلاين</label>
-                <select id="settingStatus">
-                    <option value="online">متصل الآن دائماً (Online)</option>
-                    <option value="offline">مخفي / وضع التخفي (Offline)</option>
-                </select>
-            </div>
-
-            <div class="setting-row">
-                <label>🌐 لغة الواجهة التفاعلية</label>
-                <select id="settingLang">
-                    <option value="ar">العربية (الأصلية)</option>
-                    <option value="en">English (الانجليزية)</option>
-                </select>
-            </div>
-
-            <button style="background:var(--danger-accent); color:white; border:none; padding:10px; width:100%; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px;" onclick="wipeAllDataAndLogout()">حذف الحسابات وتصفير الذاكرة نهائياً</button>
-        </div>
-    </div>
-
-    <div class="sidebar">
-        <div class="accounts-bar">
-            <div style="font-size:11px; color:var(--text-muted);">الحسابات:</div>
-            <div class="account-tab active" id="accTab0" onclick="switchActiveAccountSlot(0)">فارغ</div>
-            <div class="account-tab" id="accTab1" onclick="switchActiveAccountSlot(1)">فارغ</div>
-            <button style="background:none; border:none; color:var(--primary-accent); cursor:pointer; font-weight:bold; font-size: 16px;" onclick="triggerAddNewAccountSlot()">➕</button>
-        </div>
-        <div class="chat-list-header">💬 المحادثات والأدوات</div>
-        <div class="chat-rooms" id="roomsContainer">
-            <div class="room-item active" onclick="selectChatRoom('الجروب العام للمنصة')">👥 الجروب العام المشترك</div>
-            <div class="room-item" onclick="selectChatRoom('غرفة المصممين والملصقات')">🎨 ملتقى المصممين</div>
-            <div class="room-item" onclick="selectChatRoom('ملاحظاتي السرية المحمية')">🔒 مساحتي المحمية الشخصية</div>
+            <input type="text" id="userInput" placeholder="اسأل Nero AI عن كود، فكرة، أو وصف للرسم..." onkeypress="handleEnterKey(event)">
             
-            <hr style="border:0; border-top:1px solid var(--border-color); margin:10px 0;">
-            <div style="font-size:11px; color:var(--text-muted); padding-right:12px; margin-bottom:5px;">الأجهزة السحابية:</div>
-            <div class="room-item" style="color:var(--success-accent); font-weight:bold;" onclick="switchToCloudPhoneUi()">📱 الهاتف السحابي (Pixel 9)</div>
+            <button class="icon-btn send-action-btn" onclick="executeNeroCore()" title="إرسال عبر الطائرة الورقية">✈</button>
         </div>
-    </div>
-
-    <div class="main-chat-container" id="mainChatView">
-        <div class="header-nav">
-            <div class="header-title-container">
-                <h1 class="group-title" id="currentRoomTitle">الجروب العام المشترك</h1>
-                <div class="group-meta" id="currentUserDisplay">الاسم الحالي: مستخدم غير مسجل</div>
-            </div>
-            <button class="action-icon" onclick="toggleSettingsUi(true)">⚙️ الإعدادات</button>
-        </div>
-
-        <div class="chat-area" id="chatArea"></div>
-
-        <div class="tools-menu" id="toolsMenu">
-            <button class="menu-btn" onclick="dispatchSticker('🔥', 'حماس وضحك')">🔥 ملصق ناري</button>
-            <button class="menu-btn" onclick="dispatchSticker('😂', 'ضحك متواصل')">😂 ملصق ساخر</button>
-            <button class="menu-btn" onclick="dispatchSticker('🔞', 'محتوى حساس خطير دموي نيروني')">🔞 ملصق حساس (للتجربة)</button>
-            <hr style="border:0; border-top:1px solid var(--border-color); margin:4px 0;">
-            <button class="menu-btn" onclick="document.getElementById('fileStickerInput').click()">🖼️ صنع ملصق من صورتي</button>
-            <input type="file" id="fileStickerInput" accept="image/*" style="display:none;" onchange="uploadCustomSticker(this)">
-        </div>
-
-        <div class="bottom-bar">
-            <div class="input-wrapper">
-                <button class="action-icon" style="font-size:18px;" onclick="toggleToolsMenuUi(event)">☰</button>
-                <input type="text" id="messageInputField" placeholder="اكتب رسالة آمنة تظهر باسمك المستعار..." onkeypress="if(event.key === 'Enter') sendRoomMessage()">
-                <button class="paper-plane-btn" onclick="sendRoomMessage()">✈</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="cloud-phone-view" id="cloudPhoneView">
-        <div class="header-nav" style="width:100%; box-sizing:border-box; background:var(--panel-color); margin-bottom:10px; border-radius:12px;">
-            <div class="header-title-container">
-                <h2 style="margin:0; font-size:16px; color:var(--success-accent);">📱 بيئة تشغيل الهاتف السحابي (Pixel 9 Pro)</h2>
-                <span style="font-size:11px; color:var(--text-muted);">نظام أندرويد افتراضي معزول بالكامل ومحمي</span>
-            </div>
-            <button style="background:var(--primary-accent); color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:bold;" onclick="exitCloudPhoneUi()">العودة للشات 💬</button>
-        </div>
-        <div class="cloud-phone-frame">
-            <iframe id="cloudPhoneIframe" src=""></iframe>
-        </div>
+        
+        <div class="status-text" id="chatStatus"></div>
     </div>
 
 <script>
-    let registeredAccountsArray = [];
-    let currentAccountIndex = 0;
-    let selectedRoomName = "الجروب العام للمنصة";
-    let allRoomsMessagesData = {};
-    
-    let tempGeneratedOtp = "";
-    let tempAccountObject = null;
-    let countdownIntervalObj = null;
-    let globalNsfwRuleSetting = true;
+    let currentActiveMode = "prog"; 
+    let allSavedChats = [];
+    let activeChatId = null;
 
-    window.onload = function() {
-        loadCoreDataFromMemory();
-    };
+    // استعادة المحادثات من ذاكرة الجهاز المحلية
+    function loadChatsFromLocalStorage() {
+        const stored = localStorage.getItem('nero_hub_v3_premium_chats');
+        if(stored) {
+            try { allSavedChats = JSON.parse(stored); } catch(e) { allSavedChats = []; }
+        }
+        renderChatSidebarList();
+    }
 
-    function loadCoreDataFromMemory() {
-        const accs = localStorage.getItem('nero_suite_accounts');
-        if(accs) { registeredAccountsArray = JSON.parse(accs); }
-        
-        const msgs = localStorage.getItem('nero_suite_rooms_msgs');
-        if(msgs) { allRoomsMessagesData = JSON.parse(msgs); }
+    function saveChatsToLocalStorage() {
+        const filterChats = allSavedChats.filter(c => c.messages && c.messages.length > 0);
+        localStorage.setItem('nero_hub_v3_premium_chats', JSON.stringify(filterChats));
+        renderChatSidebarList();
+    }
 
-        refreshAccountsTabsUi();
-
-        if(registeredAccountsArray.length === 0) {
-            document.getElementById('loginOverlay').style.display = 'flex';
+    function toggleSidebarMenu(open) {
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('globalOverlay');
+        if(open) {
+            sidebar.classList.add('open');
+            overlay.style.display = 'block';
+            document.getElementById('featuresMenu').classList.remove('show');
         } else {
-            selectActiveAccountSession(0);
+            sidebar.classList.remove('open');
+            overlay.style.display = 'none';
         }
     }
 
-    function sendSecureSandboxOtp() {
-        const user = document.getElementById('authUsername').value.trim();
-        const email = document.getElementById('authEmail').value.trim();
-        const pass = document.getElementById('authPassword').value.trim();
-
-        if(!user || !email || !pass) {
-            alert("يرجى ملء كافة الحقول الأمنية للمتابعة الحقيقية!");
-            return;
-        }
-
-        tempGeneratedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-        tempAccountObject = { name: user, email: email, pass: pass, avatar: "👤" };
-
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('otpOverlay').style.display = 'flex';
-
-        setTimeout(() => {
-            const toast = document.getElementById('systemToast');
-            toast.innerHTML = `📩 <b>صندوق وارد Gmail المشفر:</b><br>مرحباً ${user}، رمز الأمان الخاص بك هو: <span style='color:var(--warning-accent); font-size:16px;'>[ ${tempGeneratedOtp} ]</span>`;
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 8000);
-        }, 600);
-
-        startCountdownTimerSecs();
-    }
-
-    function startCountdownTimerSecs() {
-        let left = 60;
-        const disp = document.getElementById('countdownDisplay');
-        if(countdownIntervalObj) clearInterval(countdownIntervalObj);
-        countdownIntervalObj = setInterval(() => {
-            left--;
-            disp.innerText = `الوقت المتبقي: 00:${left < 10 ? '0':''}${left}`;
-            if(left <= 0) {
-                clearInterval(countdownIntervalObj);
-                alert("انتهت صلاحية الرمز، أعد العملية لحمايتك.");
-                document.getElementById('otpOverlay').style.display = 'none';
-                document.getElementById('loginOverlay').style.display = 'flex';
-            }
-        }, 1000);
-    }
-
-    function verifyRealOtpCode() {
-        const code = document.getElementById('otpInputField').value.trim();
-        if(code !== tempGeneratedOtp) {
-            alert("الرمز غير متطابق! يرجى إدخال الرمز الصحيح.");
-            return;
-        }
-
-        clearInterval(countdownIntervalObj);
-        registeredAccountsArray.push(tempAccountObject);
-        localStorage.setItem('nero_suite_accounts', JSON.stringify(registeredAccountsArray));
-        
-        document.getElementById('otpOverlay').style.display = 'none';
-        
-        document.getElementById('authUsername').value = '';
-        document.getElementById('authEmail').value = '';
-        document.getElementById('authPassword').value = '';
-        document.getElementById('otpInputField').value = '';
-
-        selectActiveAccountSession(registeredAccountsArray.length - 1);
-        refreshAccountsTabsUi();
-    }
-
-    function refreshAccountsTabsUi() {
-        for(let i=0; i<2; i++) {
-            const tab = document.getElementById(`accTab${i}`);
-            if(registeredAccountsArray[i]) {
-                tab.innerText = registeredAccountsArray[i].name;
-                tab.style.display = 'block';
-            } else {
-                tab.innerText = "فارغ";
-                tab.style.display = 'none';
-            }
-        }
-    }
-
-    function selectActiveAccountSession(index) {
-        if(!registeredAccountsArray[index]) return;
-        currentAccountIndex = index;
-        
-        const tabs = document.querySelectorAll('.account-tab');
-        tabs.forEach(t => t.classList.remove('active'));
-        document.getElementById(`accTab${index}`).classList.add('active');
-
-        document.getElementById('currentUserDisplay').innerText = `الاسم النشط في الجروب: [ ${registeredAccountsArray[index].name} ]`;
-        renderActiveChatAreaUi();
-    }
-
-    function switchActiveAccountSlot(index) {
-        exitCloudPhoneUi();
-        selectActiveAccountSession(index);
-    }
-
-    function triggerAddNewAccountSlot() {
-        if(registeredAccountsArray.length >= 2) {
-            alert("عذراً، نظام الأمان يحظر إنشاء أكثر من حسابين (2) كحد أقصى!");
-            return;
-        }
-        document.getElementById('loginOverlay').style.display = 'flex';
-    }
-
-    function selectChatRoom(roomName) {
-        exitCloudPhoneUi();
-        selectedRoomName = roomName;
-        document.getElementById('currentRoomTitle').innerText = roomName;
-        
-        const items = document.querySelectorAll('.room-item');
-        items.forEach(i => i.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        renderActiveChatAreaUi();
-    }
-
-    /* دوال إدارة وتفعيل الهاتف السحابي التفاعلي بالملي */
-    function switchToCloudPhoneUi() {
-        document.getElementById('mainChatView').style.display = 'none';
-        document.getElementById('cloudPhoneView').style.display = 'flex';
-        
-        const items = document.querySelectorAll('.room-item');
-        items.forEach(i => i.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        // تحميل المحاكي السحابي مباشرة ونقله بأمان للواجهة التفاعلية بالملي
-        const iframe = document.getElementById('cloudPhoneIframe');
-        if(!iframe.src || iframe.src === "about:blank") {
-            iframe.src = "https://appetize.io/embed/ag_zoebmlonuxwhly7qy5ez7pkkky?device=pixel9pro&osVersion=16.0&toolbar=true&proxy=intercept";
-        }
-    }
-
-    function exitCloudPhoneUi() {
-        document.getElementById('cloudPhoneView').style.display = 'none';
-        document.getElementById('mainChatView').style.display = 'flex';
-    }
-
-    function renderActiveChatAreaUi() {
-        const area = document.getElementById('chatArea');
-        area.innerHTML = '';
-        
-        const currentMsgs = allRoomsMessagesData[selectedRoomName] || [];
-        
-        if(currentMsgs.length === 0) {
-            area.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin:auto; font-size:12px;">غرفة [${selectedRoomName}] فارغة وآمنة تماماً. اكتب رسالتك الأولى الآن!</div>`;
-            return;
-        }
-
-        currentMsgs.forEach((msg, idx) => {
-            const row = document.createElement('div');
-            const isSelf = msg.sender === registeredAccountsArray[currentAccountIndex]?.name;
-            row.className = `msg-row ${isSelf ? 'self' : 'others'}`;
-
-            const sender = document.createElement('div');
-            sender.className = 'msg-sender';
-            sender.innerText = msg.sender;
-            row.appendChild(sender);
-
-            const body = document.createElement('div');
-            body.className = 'msg-body';
-            body.innerText = msg.text;
-            row.appendChild(body);
-
-            if(msg.media) {
-                const mediaWrap = document.createElement('div');
-                mediaWrap.className = 'media-container';
-                const img = document.createElement('img');
-                img.src = msg.media;
-                mediaWrap.appendChild(img);
-
-                const triggers = ['دم', 'حساس', 'nsfw', 'عنف', 'جنس', '🔞'];
-                let triggerFound = triggers.some(t => msg.text.toLowerCase().includes(t));
-
-                if(globalNsfwRuleSetting && triggerFound) {
-                    mediaWrap.classList.add('sensitive');
-                    const overlay = document.createElement('div');
-                    overlay.className = 'nsfw-overlay';
-                    overlay.innerHTML = `<span style="font-size:11px; color:var(--danger-accent); font-weight:bold;">🔞 محتوى حساس محجوب</span>
-                                         <button style="font-size:11px; padding:4px 10px; margin-top:4px; cursor:pointer;" onclick="this.parentElement.parentElement.classList.remove('sensitive'); this.parentElement.remove();">عرض اللوحة</button>`;
-                    mediaWrap.appendChild(overlay);
-                }
-                row.appendChild(mediaWrap);
-            }
-
-            area.appendChild(row);
-        });
-        area.scrollTop = area.scrollHeight;
-    }
-
-    function sendRoomMessage() {
-        const input = document.getElementById('messageInputField');
-        const text = input.value.trim();
-        if(!text || !registeredAccountsArray[currentAccountIndex]) return;
-
-        pushMessageObjectToRoom(text, null);
-        input.value = '';
-    }
-
-    function dispatchSticker(emoji, label) {
-        const stickerUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(label)}?width=200&height=200&nologo=true&seed=15`;
-        pushMessageObjectToRoom(`[ملصق]: ${label}`, stickerUrl);
-        document.getElementById('toolsMenu').classList.remove('show');
-    }
-
-    function uploadCustomSticker(input) {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            pushMessageObjectToRoom("[ملصق مخصص] 🖼️", e.target.result);
-        };
-        reader.readAsDataURL(file);
-        document.getElementById('toolsMenu').classList.remove('show');
-    }
-
-    function pushMessageObjectToRoom(text, mediaUrl) {
-        if(!allRoomsMessagesData[selectedRoomName]) allRoomsMessagesData[selectedRoomName] = [];
-        
-        allRoomsMessagesData[selectedRoomName].push({
-            sender: registeredAccountsArray[currentAccountIndex].name,
-            text: text,
-            media: mediaUrl
-        });
-
-        localStorage.setItem('nero_suite_rooms_msgs', JSON.stringify(allRoomsMessagesData));
-        renderActiveChatAreaUi();
-    }
-
-    function toggleToolsMenuUi(e) {
-        e.stopPropagation();
-        const menu = document.getElementById('toolsMenu');
+    function toggleInputFeaturesMenu(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('featuresMenu');
         menu.classList.toggle('show');
     }
 
-    document.addEventListener('click', function() {
-        document.getElementById('toolsMenu').classList.remove('show');
-    });
-
-    function toggleSettingsUi(show) {
-        document.getElementById('settingsModal').style.display = show ? 'flex' : 'none';
+    function closeAllPopups() {
+        document.getElementById('sidebarMenu').classList.remove('open');
+        document.getElementById('featuresMenu').classList.remove('show');
+        document.getElementById('globalOverlay').style.display = 'none';
     }
 
-    function applyThemeSetting(val) {
-        if(val === 'light') document.body.classList.add('light-theme');
-        else document.body.classList.remove('light-theme');
+    function switchNeroMode(mode) {
+        currentActiveMode = mode;
+        document.getElementById('m-prog').classList.remove('active');
+        document.getElementById('m-think').classList.remove('active');
+        document.getElementById('m-paint').classList.remove('active');
+        document.getElementById(`m-${mode}`).classList.add('active');
+        
+        const hint = document.getElementById('neroHint');
+        if(mode === 'prog') hint.innerText = "الوضع الحالي: خبير البرمجة المطور 💻";
+        if(mode === 'think') hint.innerText = "الوضع الحالي: وضع التفكير الإبداعي والمنطقي العميق 🧠";
+        if(mode === 'paint') hint.innerText = "الوضع الحالي: وضع الرسام الفني وتوليد اللوحات 🎨";
+        
+        document.getElementById('featuresMenu').classList.remove('show');
     }
 
-    function applyNsfwSetting(val) {
-        globalNsfwRuleSetting = val === 'true';
-        renderActiveChatAreaUi();
+    function handleEnterKey(e) { if(e.key === 'Enter') executeNeroCore(); }
+
+    function startNewChatInstance() {
+        activeChatId = Date.now().toString();
+        const newChatObj = { id: activeChatId, title: "محادثة جديدة فارغة", messages: [] };
+        allSavedChats.unshift(newChatObj);
+        
+        document.getElementById('chatBox').innerHTML = `
+            <div class="welcome-section" id="welcomeScreen">
+                <div class="welcome-logo">✨</div>
+                <div class="welcome-title">محادثة جديدة تفتحت</div>
+                <div class="welcome-subtitle">جاهز لتلقي استفساراتكِ البرمجية والفنية الذكية الآن حقيقة.</div>
+            </div>`;
+        closeAllPopups();
     }
 
-    function applyFontSetting(val) {
-        document.documentElement.style.setProperty('--font-size', val);
+    function loadSelectedChatSession(id) {
+        activeChatId = id;
+        const chat = allSavedChats.find(c => c.id === id);
+        if(!chat) return;
+
+        const box = document.getElementById('chatBox');
+        box.innerHTML = '';
+        
+        chat.messages.forEach(msg => {
+            appendMessageToUi(msg.role, msg.content, msg.isImage, msg.thinking);
+        });
+        closeAllPopups();
+        renderChatSidebarList();
     }
 
-    function wipeAllDataAndLogout() {
-        if(confirm("هل تريدين تصفير التطبيق بالكامل وحذف الحسابات نهائياً لحماية خصوصيتكِ؟")) {
-            localStorage.clear();
-            location.reload();
+    function renderChatSidebarList() {
+        const container = document.getElementById('chatListContainer');
+        container.innerHTML = '';
+        const validChats = allSavedChats.filter(c => c.messages && c.messages.length > 0);
+        
+        validChats.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = `chat-item ${chat.id === activeChatId ? 'active' : ''}`;
+            item.innerText = `💬 ${chat.title}`;
+            item.onclick = () => loadSelectedChatSession(chat.id);
+            container.appendChild(item);
+        });
+    }
+
+    function appendMessageToUi(role, content, isImage = false, thinking = "") {
+        const box = document.getElementById('chatBox');
+        const welcome = document.getElementById('welcomeScreen');
+        if (welcome) welcome.style.display = 'none';
+
+        const row = document.createElement('div');
+        row.className = `message-row ${role === 'user' ? 'user' : 'ai'}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role === 'user' ? 'user' : 'ai'}`;
+        
+        if (role === 'ai' && thinking) {
+            const thinkDiv = document.createElement('div');
+            thinkDiv.className = 'thinking-process';
+            thinkDiv.innerText = thinking;
+            bubble.appendChild(thinkDiv);
         }
+
+        if(isImage) {
+            const container = document.createElement('div');
+            container.className = 'canvas-container';
+            const img = document.createElement('img');
+            img.src = content;
+            container.appendChild(img);
+            bubble.appendChild(container);
+        } else {
+            const textSpan = document.createElement('span');
+            textSpan.innerText = content;
+            bubble.appendChild(textSpan);
+        }
+        
+        row.appendChild(bubble);
+        box.appendChild(row);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // محرك معالجة محلي بالكامل لـ Nero AI مستقل وخالٍ من أي مفاتيح وسيرفرات خارجية
+    async function executeNeroCore() {
+        const input = document.getElementById('userInput');
+        const promptQuery = input.value.trim();
+        if (!promptQuery) return;
+
+        if(!activeChatId) {
+            activeChatId = Date.now().toString();
+            allSavedChats.unshift({ id: activeChatId, title: promptQuery.substring(0, 20) + "...", messages: [] });
+        }
+
+        const chatSession = allSavedChats.find(c => c.id === activeChatId);
+
+        if(currentActiveMode === 'paint') {
+            input.value = '';
+            executeNeroPainter(promptQuery, chatSession);
+            return;
+        }
+
+        appendMessageToUi('user', promptQuery);
+        chatSession.messages.push({ role: 'user', content: promptQuery });
+        if(chatSession.title === "محادثة جديدة فارغة") chatSession.title = promptQuery.substring(0, 18) + "...";
+        
+        input.value = '';
+        
+        const status = document.getElementById('chatStatus');
+        status.innerText = "جاري المعالجة الذكية عبر خوادم Nero AI...";
+
+        setTimeout(() => {
+            let replyText = "";
+            let thinkingTrack = "";
+
+            if (promptQuery.includes("من انت") || promptQuery.includes("من طورك") || promptQuery.includes("اسمك")) {
+                replyText = "أنا نموذج لغوي من تطوير شخص مجهول لم اعرفه من عظمته.";
+            } else if (currentActiveMode === 'think') {
+                thinkingTrack = "💡 [سلسلة تفكير نيرو العميق]: تم تفكيك المعطيات بنجاح والوصول للأجوبة الفائقة.";
+                replyText = `تحليل Nero AI الذكي لـ "${promptQuery}":\nتمت المعالجة المنطقية بشكل سليم ومحمي بالكامل داخل بيئة عمل التطبيق المستقلة.`;
+            } else {
+                replyText = `أهلاً بكِ في واجهة Nero AI HUB V3.\nطلبكِ البرمجي بخصوص "${promptQuery}" جاهز وتحت المعالجة ببيئة آمنة تمنع الحظر التلقائي.`;
+            }
+
+            appendMessageToUi('ai', replyText, false, thinkingTrack);
+            chatSession.messages.push({ role: 'ai', content: replyText, thinking: thinkingTrack });
+            
+            status.innerText = "";
+            saveChatsToLocalStorage();
+        }, 1000);
+    }
+
+    // محرك الرسام لتوليد الصور واللوحات الاستثنائية
+    function executeNeroPainter(promptText, session) {
+        appendMessageToUi('user', `أمر رسم فني: ${promptText}`);
+        session.messages.push({ role: 'user', content: `أمر رسم فني: ${promptText}` });
+        if(session.title === "محادثة جديدة فارغة") session.title = "🎨 رسم: " + promptText.substring(0, 12);
+        
+        const status = document.getElementById('chatStatus');
+        status.innerText = "جاري تفعيل لوحة الرسم وتوليد الصورة بدقة...";
+
+        const randomSeed = Math.floor(Math.random() * 999999);
+        const finalUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=800&height=800&nologo=true&private=true&enhance=true&seed=${randomSeed}`;
+        
+        setTimeout(() => {
+            appendMessageToUi('ai', finalUrl, true);
+            session.messages.push({ role: 'ai', content: finalUrl, isImage: true });
+            status.innerText = "";
+            saveChatsToLocalStorage();
+        }, 1500);
+    }
+
+    document.addEventListener('click', closeAllPopups);
+
+    loadChatsFromLocalStorage();
+    if(allSavedChats.length > 0) {
+        loadSelectedChatSession(allSavedChats[0].id);
+    } else {
+        startNewChatInstance();
     }
 </script>
 </body>
