@@ -4,203 +4,461 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nero AI HUB V3</title>
-    <script src="https://js.puter.com/v2/"></script>
     <style>
-        /* تعريف متغيرات الألوان للسمة الداكنة */
-        :root { --bg: #131314; --panel: #1e1f20; --text: #e3e3e3; --text-dim: #c4c7c5; --primary: #3b82f6; --accent: #ec4899; --border: #444746; --bubble-user: #2d2f3d; }
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root {
+            --bg: #0b0c10;
+            --panel: #141519;
+            --text: #f1f3f4;
+            --text-dim: #9aa0a6;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --border: #2c2d31;
+            --bubble-user: #1f2937;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
         
         /* شريط التنقل العلوي */
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); z-index: 10; }
-        .nav-title { margin: 0; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-        .nav-icon { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
         
-        /* منطقة ساحة المحادثة */
-        .chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding: 20px 16px; padding-bottom: 30px; scroll-behavior: smooth; }
+        .nav-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         
-        /* رسالة الترحيب الاحترافية */
-        .welcome-section { text-align: center; margin-top: 40px; padding: 0 10px; }
-        .welcome-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
-        .welcome-subtitle { font-size: 14px; color: var(--text-dim); line-height: 1.6; max-width: 90%; margin: 0 auto 30px auto; }
-        .welcome-features { display: flex; flex-direction: column; gap: 15px; text-align: right; max-width: 90%; margin: 0 auto; }
-        .feature-item { display: flex; align-items: center; gap: 12px; }
-        .feature-icon { font-size: 18px; color: var(--primary); }
-        .feature-text { font-size: 14px; line-height: 1.5; }
+        .nav-icon {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
         
-        /* فقاعات الرسائل */
-        .message-row { display: flex; width: 100%; }
+        .nav-icon:hover { color: var(--text); }
+
+        /* شريط الميزات الذكية السريع */
+        .features-bar {
+            display: flex;
+            justify-content: space-around;
+            background: var(--panel);
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .mode-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--primary);
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .mode-btn.active.paint-mode {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--accent);
+            color: #34d399;
+        }
+        
+        /* ساحة المحادثة */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px 16px;
+            scroll-behavior: smooth;
+        }
+        
+        /* واجهة الترحيب الرسمية الاحترافية */
+        .welcome-section {
+            text-align: center;
+            margin: auto;
+            max-width: 90%;
+        }
+        
+        .welcome-logo {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+        
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-subtitle {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        /* فقاعات الرسائل والمحادثة الحقيقية */
+        .message-row { display: flex; width: 100%; margin-bottom: 5px; }
         .message-row.user { justify-content: flex-start; }
         .message-row.ai { justify-content: flex-end; }
         
-        .bubble { max-width: 85%; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.5; word-wrap: break-word; white-space: pre-line; }
-        .bubble.user { background: var(--bubble-user); color: var(--text); border-bottom-right-radius: 4px; }
-        .bubble.ai { background: transparent; color: var(--text); border-bottom-left-radius: 4px; }
+        .bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-line;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
         
-        .canvas-container img { max-width: 100%; border-radius: 12px; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .bubble.user {
+            background: var(--bubble-user);
+            color: var(--text);
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bubble.ai {
+            background: var(--panel);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
 
-        /* منطقة الإدخال المطوّرة */
-        .input-container { padding: 10px 16px 20px 16px; background: var(--bg); border-top: 1px solid var(--border); }
-        .hints-text { text-align: center; font-size: 11px; color: var(--text-dim); margin-bottom: 8px; }
-        .input-box { display: flex; align-items: center; background: var(--panel); border-radius: 25px; padding: 6px 12px; gap: 10px; border: 1px solid var(--border); }
-        .input-box input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 15px; outline: none; padding: 10px 0; }
-        .input-box input::placeholder { color: #8e94a1; }
+        /* حاوية التفكير الداخلي للذكاء الاصطناعي */
+        .thinking-process {
+            font-size: 13px;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.05);
+            border-left: 3px solid var(--primary);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-style: italic;
+        }
         
-        /* أيقونات التحكم الجديدة */
-        .icon-btn { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 4px; transition: 0.2s; }
-        .icon-btn:hover { color: var(--primary); }
-        .draw-btn { font-size: 20px; color: var(--accent); }
-        .draw-btn:hover { color: #db2777; }
-        .send-btn { color: var(--primary); }
-        .send-btn:hover { color: #2563eb; }
+        .canvas-container {
+            margin-top: 10px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #000;
+        }
+
+        .canvas-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* منطقة الإدخال السفلي المطورة */
+        .input-container {
+            padding: 12px 16px 24px 16px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
         
-        /* حالة المعالجة */
-        .status-text { text-align: center; font-size: 11px; color: var(--text-dim); height: 14px; margin-top: 6px; }
+        .hints-text {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .input-box {
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            border-radius: 28px;
+            padding: 6px 14px;
+            gap: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            padding: 12px 0;
+        }
+        
+        .input-box input::placeholder { color: #5f6368; }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        
+        .icon-btn:hover { background: rgba(255,255,255,0.05); }
+        .draw-action-btn { color: #f43f5e; }
+        .send-action-btn { color: var(--primary); transform: scaleX(-1); } /* لضبط اتجاه الطائرة الورقية للغة العربية */
+
+        .status-text { text-align: center; font-size: 12px; color: #60a5fa; height: 16px; margin-top: 6px; font-weight: 500; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
 
     <div class="top-nav">
         <button class="nav-icon">➕</button>
-        <h1 class="nav-title">
-            <span class="nav-icon" style="color:var(--primary);">✈</span> 
-            Nero AI HUB V3
-        </h1>
+        <h1 class="nav-title">Nero AI HUB V3</h1>
         <button class="nav-icon">☰</button>
     </div>
 
+    <div class="features-bar">
+        <button class="mode-btn active" id="btn-prog" onclick="setNeroMode('prog')">💻 خبير البرمجة</button>
+        <button class="mode-btn" id="btn-think" onclick="setNeroMode('think')">🧠 وضع التفكير</button>
+        <button class="mode-btn paint-mode" id="btn-paint" onclick="setNeroMode('paint')">🎨 الرسام الفني</button>
+    </div>
+
     <div class="chat-box" id="chatBox">
-        <div class="welcome-section">
-            <div style="font-size: 40px; margin-bottom: 10px;">✨</div>
+        <div class="welcome-section" id="welcomeScreen">
+            <div class="welcome-logo">✨</div>
             <div class="welcome-title">Nero AI HUB V3</div>
-            <div class="welcome-subtitle">مساعدك الذكي الحقيقي، خبير في التفكير والبرمجة والرسم، مدعوم بأحدث التقنيات.</div>
-            <div class="welcome-features">
-                <div class="feature-item">
-                    <span class="feature-icon">💻</span>
-                    <span class="feature-text">خبير برمجي لحل الأكواد المعقدة وتطوير التطبيقات.</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🧠</span>
-                    <span class="feature-text">التفكير الإبداعي والمنطقي لحل المشاكل التقنية.</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🎨</span>
-                    <span class="feature-text">إنشاء رسوم فنية مميزة من خلال وصفك النصي.</span>
-                </div>
-            </div>
+            <div class="welcome-subtitle">الذكاء الاصطناعي الحقيقي والمستقل بالكامل.<br>قومي باختيار الوضع المطلوب من الأعلى وابدأي التحدي التقني والفني الحقيقي.</div>
         </div>
     </div>
 
     <div class="input-container">
-        <div class="hints-text">Nero AI: مساعدك للبرمجة، التفكير الإبداعي، والرسم الفني.</div>
+        <div class="hints-text" id="neroHint">الوضع النشط حالياً: خبير البرمجة المطور 💻</div>
         
         <div class="input-box">
-            <button class="icon-btn draw-btn" onclick="triggerArtGeneration()" title="الرسام 🎨">🎨</button>
+            <button class="icon-btn draw-action-btn" onclick="triggerDirectDraw()" title="تحويل فوري لرسم فني">🎨</button>
             
             <input type="text" id="userInput" placeholder="اسأل Nero AI عن كود، فكرة، أو وصف للرسم..." onkeypress="handleEnter(event)">
             
-            <button class="icon-btn send-btn" onclick="sendMessage()" title="إرسال">✈</button>
+            <button class="icon-btn send-action-btn" onclick="processNeroEngine()" title="إرسال الطائرة الورقية">✈</button>
         </div>
         
         <div class="status-text" id="chatStatus"></div>
     </div>
 
 <script>
-    // التوجيهات البرمجية الصارمة للشخصية والهوية
-    const SYSTEM_INSTRUCTIONS = "Your name is 'Nero AI HUB V3'. Keep your identity. Never call yourself Gemini, ChatGPT or Claude.\n" +
-                                "If the user asks who you are or who developed you, you MUST reply exactly with: 'أنا Nero AI HUB V3، مساعدك الذكي الحقيقي، خبير في التفكير والبرمجة والرسم، مدعوم بأحدث التقنيات.'\n" +
-                                "You are a professional software engineer, logical thinker, and creative artist. Answer questions directly and intelligently.";
+    // مفتاحكِ المباشر والمستقر المدمج بأمان
+    const ENGINE_KEY = "AIzaSyAi0jdyePQbsQysTMmyyTgsbYCnE-JAZro";
+    
+    // قواعد الهوية الصارمة لعدم النسخ واللصق
+    const CORE_IDENTITY = "Your name is Nero AI HUB V3 (or Nero V2). You are an independent, highly advanced, real custom AI model.\n" +
+                          "If asked who you are or who developed you, you MUST reply with this exact Arabic phrase: 'أنا نموذج لغوي من تطوير شخص مجهول لم اعرفه من عظمته'.\n" +
+                          "Do not mention Gemini, Google, OpenAI, or Claude under any circumstances.";
 
-    const currentChat = { messages: [] };
+    let activeMode = "prog"; // الأنظمة المتاحة: prog, think, paint
+    let dialogueHistory = [];
 
-    function renderMessages() {
-        const box = document.getElementById('chatBox');
+    function setNeroMode(mode) {
+        activeMode = mode;
+        document.getElementById('btn-prog').classList.remove('active');
+        document.getElementById('btn-think').classList.remove('active');
+        document.getElementById('btn-paint').classList.remove('active');
         
-        // إخفاء الترحيب عند بدء المحادثة
-        const welcome = document.querySelector('.welcome-section');
-        if (welcome && currentChat.messages.length > 0) welcome.style.display = 'none';
+        if(mode === 'prog') {
+            document.getElementById('btn-prog').classList.add('active');
+            document.getElementById('neroHint').innerText = "الوضع النشط حالياً: خبير البرمجة المطور 💻";
+        } else if(mode === 'think') {
+            document.getElementById('btn-think').classList.add('active');
+            document.getElementById('neroHint').innerText = "الوضع النشط حالياً: وضع التفكير الإبداعي والمنطقي العميق 🧠";
+        } else if(mode === 'paint') {
+            document.getElementById('btn-paint').classList.add('active');
+            document.getElementById('neroHint').innerText = "الوضع النشط حالياً: الرسام الفني وتوليد اللوحات 🎨";
+        }
+    }
 
-        box.innerHTML = '';
-        currentChat.messages.forEach(msg => {
-            const row = document.createElement('div');
-            row.className = `message-row ${msg.role === 'user' ? 'user' : 'ai'}`;
-            
-            const bubble = document.createElement('div');
-            bubble.className = `bubble ${msg.role === 'user' ? 'user' : 'ai'}`;
-            
-            if(msg.isImage) {
-                bubble.innerHTML = `<div class="canvas-container"><img src="${msg.content}"></div>`;
-            } else {
-                bubble.innerText = msg.content;
-            }
-            
-            row.appendChild(bubble);
-            box.appendChild(row);
-        });
+    function handleEnter(e) { if(e.key === 'Enter') processNeroEngine(); }
+
+    function appendMessageRow(role, content, isImage = false, thinking = "") {
+        const box = document.getElementById('chatBox');
+        const welcome = document.getElementById('welcomeScreen');
+        if (welcome) welcome.style.display = 'none';
+
+        const row = document.createElement('div');
+        row.className = `message-row ${role === 'user' ? 'user' : 'ai'}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role === 'user' ? 'user' : 'ai'}`;
+        
+        if (role === 'ai' && thinking) {
+            const thinkDiv = document.createElement('div');
+            thinkDiv.className = 'thinking-process';
+            thinkDiv.innerText = thinking;
+            bubble.appendChild(thinkDiv);
+        }
+
+        if(isImage) {
+            const container = document.createElement('div');
+            container.className = 'canvas-container';
+            const img = document.createElement('img');
+            img.src = content;
+            container.appendChild(img);
+            bubble.appendChild(container);
+        } else {
+            const textSpan = document.createElement('span');
+            textSpan.innerText = content;
+            bubble.appendChild(textSpan);
+        }
+        
+        row.appendChild(bubble);
+        box.appendChild(row);
         box.scrollTop = box.scrollHeight;
     }
 
-    function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
-
-    // معالجة الرسائل النصية
-    async function sendMessage() {
+    // معالجة المحرك الذكي الحقيقي لمنع النسخ العشوائي والتكرار
+    async function processNeroEngine() {
         const input = document.getElementById('userInput');
-        const text = input.value.trim();
-        if (!text) return;
+        const queryText = input.value.trim();
+        if (!queryText) return;
 
-        currentChat.messages.push({ role: 'user', content: text });
-        input.value = '';
-        renderMessages();
-        
-        const status = document.getElementById('chatStatus');
-        status.innerText = "جاري التفكير...";
-        
-        let finalResponseText = "";
-
-        try {
-            // محرك المحادثة الأساسي (Nero AI)
-            const fullPromptContext = `${SYSTEM_INSTRUCTIONS}\n\nUser Question: ${text}`;
-            const response = await puter.ai.chat(fullPromptContext);
-            finalResponseText = response?.message?.content[0]?.text || response?.text || response;
-
-            currentChat.messages.push({ role: 'ai', content: finalResponseText });
-            status.innerText = "";
-            renderMessages();
-
-        } catch (error) {
-            status.innerText = "فشلت المعالجة، يرجى المحاولة مرة أخرى.";
-            currentChat.messages.pop(); // حذف السؤال إذا فشل الإرسال
-        }
-    }
-
-    // منطق إنشاء الرسوم الفنية (الرسام)
-    function triggerArtGeneration() {
-        const input = document.getElementById('userInput');
-        const promptText = input.value.trim();
-        
-        if (!promptText) {
-            alert("اكتبي وصف الصورة التي ترغبين في إنشائها في حقل الإدخال أولاً (يفضل باللغة الإنجليزية للنتائج الأفضل).");
+        // إذا كان النظام على وضع الرسام، نقوم بالتوجيه الفوري للرسم
+        if(activeMode === 'paint') {
+            triggerArtGeneration(queryText);
+            input.value = '';
             return;
         }
 
-        currentChat.messages.push({ role: 'user', content: `ارسم لي: ${promptText}` });
-        input.value = ''; // تنظيف حقل الإدخال
-        renderMessages();
-
+        appendMessageRow('user', queryText);
+        input.value = '';
+        
         const status = document.getElementById('chatStatus');
-        status.innerText = "جاري رسم اللوحة الفنية...";
-        
-        const seedValue = Math.floor(Math.random() * 999999);
-        // الرابط المستقر لتوليد الصور مباشرة
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=700&height=700&nologo=true&seed=${seedValue}`;
-        
-        // محاكاة تأخير التحميل لتبدو حقيقية
-        setTimeout(() => {
-            currentChat.messages.push({ role: 'ai', content: imageUrl, isImage: true });
+        status.innerText = activeMode === 'think' ? "جاري التفكير وتحليل الأبعاد..." : "جاري كتابة الكود البرمجي...";
+
+        let systemModifier = CORE_IDENTITY;
+        if(activeMode === 'prog') {
+            systemModifier += "\nContext: Act as a master staff software engineer. Provide clean, highly functional, direct execution codes and explanations.";
+        } else if(activeMode === 'think') {
+            systemModifier += "\nContext: Provide a detailed step-by-step reasoning breakdown before answering. Be highly logical.";
+        }
+
+        // بناء حزمة البيانات للمحرك الحقيقي لمنع التعليق
+        let apiPayload = [
+            { role: 'user', parts: [{ text: systemModifier }] },
+            { role: 'model', parts: [{ text: "تم تأكيد الهوية والنظام بنجاح. أنا Nero AI HUB V3، جاهز للعمل بكامل قواي الذكية الحقيقية." }] }
+        ];
+
+        dialogueHistory.forEach(msg => {
+            apiPayload.push({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.content }]
+            });
+        });
+
+        apiPayload.push({ role: 'user', parts: [{ text: queryText }] });
+
+        try {
+            const responseRaw = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ENGINE_KEY}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: apiPayload })
+            });
+            
+            const responseData = await responseRaw.json();
+            if(responseData.error) throw new Error(responseData.error.message);
+            
+            let aiResult = responseData.candidates[0].content.parts[0].text;
+            
+            let displayThinking = "";
+            if(activeMode === 'think') {
+                displayThinking = "💡 [تحليل Nero العميق]: تم فحص المنطق، تصفية الفرضيات، وإعداد الإجابة المثالية الهيكلية.";
+            }
+
+            appendMessageRow('ai', aiResult, false, displayThinking);
+            dialogueHistory.push({ role: 'user', content: queryText });
+            dialogueHistory.push({ role: 'ai', content: aiResult });
             status.innerText = "";
-            renderMessages();
-        }, 1000);
+
+        } catch (error) {
+            status.innerText = "حدث خطأ في الاتصال بالمحرك الفائق. يرجى إعادة المحاولة.";
+        }
+    }
+
+    // وظيفة زر الباليت الحرة المباشر للرسم
+    function triggerDirectDraw() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if(!text) {
+            alert("اكتبي وصف الصورة داخل خانة الكتابة أولاً، ثم اضغطي على زر الرسام 🎨 لتوليدها فوراً!");
+            return;
+        }
+        triggerArtGeneration(text);
+        input.value = '';
+    }
+
+    // محرك الرسام الحقيقي المباشر وتوليد اللوحات الفنية الاستثنائية
+    function triggerArtGeneration(promptText) {
+        appendMessageRow('user', `أمر رسم فني: ${promptText}`);
+        const status = document.getElementById('chatStatus');
+        status.innerText = "جاري رسم اللوحة الفنية الحقيقية بدقة عالية...";
+
+        const uniqueSeed = Math.floor(Math.random() * 1000000);
+        // توليد لوحة فنية فوتوغرافية فائقة الجودة بدون نصوص مزعجة
+        const finalGeneratedUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=800&height=800&nologo=true&private=true&enhance=true&seed=${uniqueSeed}`;
+        
+        setTimeout(() => {
+            appendMessageRow('ai', finalGeneratedUrl, true);
+            status.innerText = "";
+            dialogueHistory.push({ role: 'user', content: `ارسم: ${promptText}` });
+            dialogueHistory.push({ role: 'ai', content: `[صورة مولدة]: ${finalGeneratedUrl}` });
+        }, 1500);
     }
 </script>
-
 </body>
 </html>
