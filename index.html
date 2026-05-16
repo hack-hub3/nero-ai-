@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nero Group HUB - دردشة جماعية</title>
+    <title>Nero Group HUB - المنصة الجماعية الآمنة</title>
     <style>
         :root {
             --bg-color: #0b0c10;
@@ -12,6 +12,8 @@
             --text-muted: #9aa0a6;
             --primary-accent: #3b82f6;
             --success-accent: #10b981;
+            --warning-accent: #f59e0b;
+            --danger-accent: #ef4444;
             --border-color: #2c2d31;
             --whatsapp-user: #128c7e;
             --whatsapp-other: #202c33;
@@ -21,36 +23,64 @@
             font-family: system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow: hidden;
         }
         
-        /* الشريط العلوي للمجموعة */
-        .header-nav {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
+        /* شاشات تسجيل الدخول والتحقق */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 12, 16, 0.95); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            overflow-y: auto;
+        }
+
+        .auth-box {
             background: var(--panel-color);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 10;
-            gap: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 28px;
+            width: 90%; max-width: 380px;
+            text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        }
+
+        .warning-banner {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning-accent);
+            color: #fbbf24; padding: 10px 12px;
+            border-radius: 12px; font-size: 12px;
+            line-height: 1.5; text-align: right; margin-bottom: 16px;
+        }
+
+        .auth-box input {
+            width: 100%; padding: 12px;
+            background: var(--bg-color); border: 1px solid var(--border-color);
+            border-radius: 12px; color: var(--text-main);
+            font-size: 15px; outline: none; margin-bottom: 12px;
+            box-sizing: border-box; text-align: center;
+        }
+
+        .auth-box button {
+            background: var(--primary-accent); color: white;
+            border: none; padding: 12px; border-radius: 12px;
+            font-size: 15px; cursor: pointer; width: 100%; font-weight: bold;
+        }
+
+        .timer-text { font-size: 13px; color: var(--warning-accent); margin: 8px 0; font-weight: 600; }
+
+        /* الشريط العلوي */
+        .header-nav {
+            display: flex; align-items: center; padding: 12px 16px;
+            background: var(--panel-color); border-bottom: 1px solid var(--border-color);
+            z-index: 10; gap: 12px;
         }
 
         .group-icon {
-            width: 44px;
-            height: 44px;
+            width: 42px; height: 42px;
             background: linear-gradient(135deg, var(--primary-accent), var(--success-accent));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold; color: white;
         }
 
         .group-details { flex: 1; }
@@ -58,260 +88,165 @@
         .group-meta { font-size: 11px; color: var(--success-accent); margin-top: 2px; }
         
         .action-icon {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
-            cursor: pointer;
-            padding: 4px;
-            transition: color 0.2s;
+            background: none; border: none; color: var(--text-muted);
+            font-size: 22px; cursor: pointer; padding: 6px; transition: color 0.2s;
         }
         .action-icon:hover { color: var(--text-main); }
 
-        /* شاشة منبثقة لإنشاء الحسابات */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .account-box {
-            background: var(--panel-color);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 24px;
-            width: 90%;
-            max-width: 340px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .account-box h2 { margin-top: 0; font-size: 20px; color: var(--text-main); }
-        
-        .avatar-selection {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .avatar-opt {
-            font-size: 24px;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-        .avatar-opt.selected {
-            border-color: var(--primary-accent);
-            background: rgba(255,255,255,0.05);
-        }
-
-        .account-box input {
-            width: 100%;
-            padding: 12px;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-size: 15px;
-            outline: none;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .account-box button {
-            background: var(--primary-accent);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
-
-        /* قائمة الأدوات المنبثقة من زر الخطين يمين الكتابة */
+        /* لوحة الإعدادات والملصقات المنبثقة من صندوق الكتابة (☰) */
         .tools-menu {
-            position: fixed;
-            bottom: 75px;
-            right: 16px;
-            background: var(--panel-color);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 6px;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            z-index: 3000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            width: 180px;
+            position: fixed; bottom: 75px; right: 16px;
+            background: var(--panel-color); border: 1px solid var(--border-color);
+            border-radius: 18px; padding: 8px; display: none;
+            flex-direction: column; gap: 4px; z-index: 3000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 220px;
         }
-
         .tools-menu.show { display: flex; }
 
         .menu-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 13px;
-            text-align: right;
-            cursor: pointer;
-            width: 100%;
+            display: flex; align-items: center; gap: 10px;
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 10px; border-radius: 10px; font-size: 13px;
+            text-align: right; cursor: pointer; width: 100%;
+        }
+        .menu-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+
+        /* نافذة الإعدادات الفرعية */
+        .settings-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 4000;
+            display: none; align-items: center; justify-content: center;
+        }
+        .settings-box {
+            background: var(--panel-color); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 24px; width: 90%; max-width: 320px;
         }
 
-        .menu-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-        
-        /* ساحة عرض رسائل المجموعة */
+        /* ساحة عرض الرسائل */
         .chat-area {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 20px 14px;
+            flex: 1; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 12px; padding: 20px 14px;
             scroll-behavior: smooth;
             background-image: radial-gradient(rgba(255,255,255,0.01) 1px, transparent 0);
             background-size: 20px 20px;
         }
         
-        /* فريم فقاعات الرسائل الجماعية */
+        /* فقاعات الرسائل والملصقات */
         .msg-row {
-            display: flex;
-            flex-direction: column;
-            width: fit-content;
-            max-width: 75%;
-            border-radius: 14px;
-            padding: 8px 12px;
-            position: relative;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; width: fit-content;
+            max-width: 75%; border-radius: 14px; padding: 8px 12px;
+            position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        
-        .msg-row.self {
-            background: var(--whatsapp-user);
-            align-self: flex-start;
-            border-top-right-radius: 2px;
-        }
-        
-        .msg-row.others {
-            background: var(--whatsapp-other);
-            align-self: flex-end;
-            border-top-left-radius: 2px;
-            border: 1px solid #233138;
-        }
+        .msg-row.self { background: var(--whatsapp-user); align-self: flex-start; border-top-right-radius: 2px; }
+        .msg-row.others { background: var(--whatsapp-other); align-self: flex-end; border-top-left-radius: 2px; border: 1px solid #233138; }
 
-        .msg-sender {
-            font-size: 11px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .msg-sender { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
         .self .msg-sender { color: #34d399; }
         .others .msg-sender { color: #60a5fa; }
 
-        .msg-body {
-            font-size: 14.5px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            white-space: pre-line;
+        .msg-body { font-size: 14.5px; line-height: 1.5; word-wrap: break-word; }
+
+        /* حاوية الصور والملصقات المحجوبة والبلور (Blur) */
+        .media-container { margin-top: 6px; border-radius: 10px; overflow: hidden; position: relative; }
+        .media-container img { width: 100%; max-width: 200px; height: auto; display: block; transition: filter 0.3s ease; }
+        
+        .media-container.sensitive img { filter: blur(20px); pointer-events: none; }
+        
+        .nsfw-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 8px; padding: 10px;
+            box-sizing: border-box; text-align: center;
+        }
+        .nsfw-title { font-size: 11px; color: var(--danger-accent); font-weight: bold; }
+        .nsfw-btn {
+            background: rgba(255,255,255,0.15); border: 1px solid var(--text-muted);
+            color: white; font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
         }
 
-        .msg-time {
-            font-size: 9px;
-            color: var(--text-muted);
-            align-self: flex-end;
-            margin-top: 4px;
-        }
+        .sticker-msg { background: transparent !important; box-shadow: none !important; padding: 4px 0 !important; }
+        .sticker-msg .msg-body { display: none; }
 
         /* صندوق الإدخال السفلي المطوّر */
-        .bottom-bar {
-            padding: 10px 12px 20px 12px;
-            background: var(--bg-color);
-        }
-        
+        .bottom-bar { padding: 10px 12px 20px 12px; background: var(--bg-color); }
         .input-wrapper {
-            display: flex;
-            align-items: center;
-            background: var(--panel-color);
-            border-radius: 24px;
-            padding: 4px 12px;
-            gap: 10px;
-            border: 1px solid var(--border-color);
+            display: flex; align-items: center; background: var(--panel-color);
+            border-radius: 24px; padding: 4px 12px; gap: 10px; border: 1px solid var(--border-color);
         }
-        
         .input-wrapper input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 15px;
-            outline: none;
-            padding: 10px 0;
+            flex: 1; background: transparent; border: none; color: var(--text-main);
+            font-size: 15px; outline: none; padding: 10px 0;
         }
-        
         .paper-plane-btn {
-            color: var(--primary-accent);
-            transform: scaleX(-1);
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: var(--primary-accent); transform: scaleX(-1); background: none;
+            border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center;
         }
         
         .click-shield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1500; display: none; }
+        .system-toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--primary-accent); color: white; padding: 12px 24px;
+            border-radius: 12px; font-size: 14px; z-index: 10000; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none;
+        }
     </style>
 </head>
 <body>
 
-    <div class="modal-overlay" id="accountModal" style="display: none;">
-        <div class="account-box">
-            <h2>إنشاء حساب جديد في الجروب 👋</h2>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">اختر الرمز التعبيري واسمك للانضمام الفوري للمحادثة الجماعية</p>
-            
-            <div class="avatar-selection">
-                <span class="avatar-opt selected" onclick="pickAvatar(this, '👩‍💻')">👩‍💻</span>
-                <span class="avatar-opt" onclick="pickAvatar(this, '👨‍💻')">👨‍💻</span>
-                <span class="avatar-opt" onclick="pickAvatar(this, '✨')">✨</span>
-                <span class="avatar-opt" onclick="pickAvatar(this, '👑')">👑</span>
+    <div class="system-toast" id="systemToast"></div>
+
+    <div class="auth-overlay" id="loginStepOverlay" style="display: none;">
+        <div class="auth-box">
+            <h2>تسجيل دخول جماعي آمن 🔒</h2>
+            <div class="warning-banner">
+                ⚠️ <b>تنبيه أمني هام جداً:</b> من فضلكِ لا تستخدمي بريدكِ الإلكتروني الأساسي أو الشخصي هنا لتجنب أي مشاكل أمنية خارجية؛ استخدمي بريداً وهمياً أو ثانوياً للحفاظ على خصوصيتك المطلقة.
             </div>
-            
-            <input type="text" id="usernameField" placeholder="اكتب اسم المستخدم هنا..." maxlength="12">
-            <button onclick="saveNewAccount()">دخول المحادثة الجماعية 🚀</button>
+            <input type="email" id="authEmail" placeholder="أدخلي البريد الإلكتروني (مثال: test@mail.com)">
+            <input type="password" id="authPassword" placeholder="أدخلي كلمة السر الخاصة بكِ">
+            <button onclick="requestVerificationOtp()">إرسال رمز التحقق للبريد 🚀</button>
+        </div>
+    </div>
+
+    <div class="auth-overlay" id="verifyStepOverlay" style="display: none;">
+        <div class="auth-box">
+            <h2>التحقق من الهوية ⏳</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">تم إرسال رمز التحقق المكون من 4 أرقام لبريدك الإلكتروني، يرجى كتابته فوراً قبل انتهاء الوقت.</p>
+            <div class="timer-text" id="otpTimerDisplay">الوقت المتبقي: 01:00</div>
+            <input type="text" id="authOtpCode" placeholder="أدخلي رمز التحقق المتكون من 4 أرقام" maxlength="4">
+            <button onclick="confirmAuthenticationOtp()">تأكيد الرمز ودخول الجروب ✔️</button>
+        </div>
+    </div>
+
+    <div class="settings-modal" id="settingsModal" onclick="toggleSettingsModal(false)">
+        <div class="settings-box" onclick="event.stopPropagation()">
+            <h3 style="margin-top:0;">🔧 إعدادات الحساب والمحتوى</h3>
+            <label style="font-size:13px; display:block; margin-bottom:10px;">
+                <input type="checkbox" id="nsfwToggle" checked onchange="toggleNsfwFilterRule(this.checked)"> تفعيل حجب وتشويش المحتوى الحساس (تلقائي)
+            </label>
+            <hr style="border:0; border-top:1px solid var(--border-color); margin:15px 0;">
+            <button style="background:var(--danger-accent); color:white; border:none; padding:10px; width:100%; border-radius:10px; cursor:pointer; font-weight:bold;" onclick="triggerLogoutAction()">تسجيل الخروج من المنصة</button>
         </div>
     </div>
 
     <div class="header-nav">
-        <div class="group-icon">👥</div>
+        <div class="group-icon">💬</div>
         <div class="group-details">
-            <h1 class="group-title">مجموعة الأصدقاء المشتركة</h1>
-            <div class="group-meta" id="groupCounter">الأعضاء النشطين حالياً: 1</div>
+            <h1 class="group-title">مجموعة الدردشة والملصقات الكبرى</h1>
+            <div class="group-meta" id="groupCounter">الأعضاء النشطين: 1</div>
         </div>
-        <button class="action-icon" onclick="clearGroupHistory()" title="بدء محادثة جديدة كلياً">➕</button>
+        <button class="action-icon" onclick="toggleSettingsModal(true)" title="الإعدادات">⚙️</button>
     </div>
 
     <div class="click-shield" id="clickShield" onclick="closeToolsMenu()"></div>
 
     <div class="tools-menu" id="toolsMenu">
-        <button class="menu-btn" onclick="triggerMenuAction('👋 أرسل تحية سريعة')">👋 إرسال تحية</button>
-        <button class="menu-btn" onclick="triggerMenuAction('👍 موافق!')">👍 إرسال (موافق)</button>
-        <button class="menu-btn" onclick="switchAccountAction()">🔄 تبديل أو إضافة حساب</button>
+        <div style="font-size: 11px; color:var(--text-muted); padding: 4px 10px; border-bottom:1px solid var(--border-color);">إرسال ملصقات سريعة (Stickers)</div>
+        <button class="menu-btn" onclick="sendPredefinedSticker('🔥', 'ملصق حماس')">🔥 ملصق حماس</button>
+        <button class="menu-btn" onclick="sendPredefinedSticker('😂', 'ملصق ضحك')">😂 ملصق ضحك</button>
+        <button class="menu-btn" onclick="sendPredefinedSticker('⚠️', 'محتوى حساس خطير دموي')">🔞 ملصق تجربة حجب حساس</button>
+        <hr style="border:0; border-top:1px solid var(--border-color); margin:4px 0;">
+        <button class="menu-btn" onclick="document.getElementById('stickerUploader').click()">🖼️ رفع وصنع ملصق مخصص</button>
+        <input type="file" id="stickerUploader" accept="image/*" style="display:none;" onchange="handleCustomStickerUpload(this)">
     </div>
 
     <div class="chat-area" id="chatArea"></div>
@@ -319,57 +254,106 @@
     <div class="bottom-bar">
         <div class="input-wrapper">
             <button class="action-icon" style="font-size:18px; color: var(--text-muted);" onclick="toggleToolsMenu(event)">☰</button>
-            
             <input type="text" id="messageInputField" placeholder="اكتب رسالتك للمجموعة هنا..." onkeypress="detectEnterKey(event)">
-            
             <button class="paper-plane-btn" onclick="dispatchGroupMessage()" title="إرسال">✈</button>
         </div>
     </div>
 
 <script>
-    let currentSessionUser = { name: "", avatar: "👩‍💻" };
+    let currentSessionUser = null;
     let globalMessagesLog = [];
+    let generatedOtpCode = "";
+    let otpCountdownTimer = null;
+    let isNsfwFilterActive = true;
 
     window.onload = function() {
-        initGroupApplication();
+        initApplicationSecurity();
     };
 
-    function initGroupApplication() {
-        // استعادة الحساب الحالي إن وجد
-        const cachedUser = localStorage.getItem('nero_group_current_user');
+    function initApplicationSecurity() {
+        const cachedUser = localStorage.getItem('nero_secure_user');
+        const filterRule = localStorage.getItem('nero_nsfw_rule');
+        if(filterRule !== null) {
+            isNsfwFilterActive = filterRule === 'true';
+            document.getElementById('nsfwToggle').checked = isNsfwFilterActive;
+        }
+
         if (!cachedUser) {
-            document.getElementById('accountModal').style.display = 'flex';
+            document.getElementById('loginStepOverlay').style.display = 'flex';
         } else {
             currentSessionUser = JSON.parse(cachedUser);
             syncChatLogFromStorage();
         }
     }
 
-    let selectedAvatarTmp = "👩‍💻";
-    function pickAvatar(element, icon) {
-        const opts = document.querySelectorAll('.avatar-opt');
-        opts.forEach(o => o.classList.remove('selected'));
-        element.classList.add('selected');
-        selectedAvatarTmp = icon;
-    }
-
-    function saveNewAccount() {
-        const nameText = document.getElementById('usernameField').value.trim();
-        if (!nameText) {
-            alert("من فضلك أدخل اسماً صحيحاً لتفعيل الحساب!");
+    // محاكاة حساب الوقت وإرسال الرمز للبريد الإلكتروني
+    function requestVerificationOtp() {
+        const email = document.getElementById('authEmail').value.trim();
+        const pass = document.getElementById('authPassword').value.trim();
+        
+        if(!email || !pass) {
+            alert("يرجى ملء حقول البريد وكلمة السر لإتمام الطلب!");
             return;
         }
-        currentSessionUser = { name: nameText, avatar: selectedAvatarTmp };
-        localStorage.setItem('nero_group_current_user', JSON.stringify(currentSessionUser));
-        document.getElementById('accountModal').style.display = 'none';
+
+        // توليد رمز تحقق عشوائي من 4 أرقام
+        generatedOtpCode = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById('loginStepOverlay').style.display = 'none';
+        document.getElementById('verifyStepOverlay').style.display = 'flex';
+
+        // محاكاة وصول الرمز للبريد في توست منبثق
+        setTimeout(() => {
+            const toast = document.getElementById('systemToast');
+            toast.innerText = `📩 إشعار البريد الوارد: رمز التحقق السري الخاص بك هو [ ${generatedOtpCode} ]`;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 7000);
+        }, 1000);
+
+        startOtpTimerCountdown();
+    }
+
+    function startOtpTimerCountdown() {
+        let secondsLeft = 60;
+        const display = document.getElementById('otpTimerDisplay');
+        display.innerText = "الوقت المتبقي: 01:00";
+
+        if(otpCountdownTimer) clearInterval(otpCountdownTimer);
+
+        otpCountdownTimer = setInterval(() => {
+            secondsLeft--;
+            let mins = Math.floor(secondsLeft / 60);
+            let secs = secondsLeft % 60;
+            display.innerText = `الوقت المتبقي: ${mins < 10 ? '0':''}${mins}:${secs < 10 ? '0':''}${secs}`;
+
+            if(secondsLeft <= 0) {
+                clearInterval(otpCountdownTimer);
+                alert("انتهت صلاحية رمز التحقق الحالي! يرجى إعادة طلب إرسال رمز جديد.");
+                document.getElementById('verifyStepOverlay').style.display = 'none';
+                document.getElementById('loginStepOverlay').style.display = 'flex';
+            }
+        }, 1000);
+    }
+
+    function confirmAuthenticationOtp() {
+        const enteredCode = document.getElementById('authOtpCode').value.trim();
+        if(enteredCode !== generatedOtpCode) {
+            alert("رمز التحقق غير صحيح! يرجى التأكد والمحاولة مرة أخرى.");
+            return;
+        }
+
+        clearInterval(otpCountdownTimer);
+        const email = document.getElementById('authEmail').value.trim();
+        const extractedUsername = email.split('@')[0];
+
+        currentSessionUser = { name: extractedUsername, email: email, avatar: "👤" };
+        localStorage.setItem('nero_secure_user', JSON.stringify(currentSessionUser));
         
-        // إرسال رسالة انضمام تلقائية للجروب
-        injectSystemNotification(`${currentSessionUser.avatar} ${currentSessionUser.name} انضم إلى المجموعة الآن.`);
+        document.getElementById('verifyStepOverlay').style.display = 'none';
         syncChatLogFromStorage();
     }
 
     function syncChatLogFromStorage() {
-        const logged = localStorage.getItem('nero_group_messages_history');
+        const logged = localStorage.getItem('nero_secure_messages');
         if (logged) {
             try { globalMessagesLog = JSON.parse(logged); } catch(e) { globalMessagesLog = []; }
         } else {
@@ -383,32 +367,64 @@
         const area = document.getElementById('chatArea');
         area.innerHTML = '';
 
-        if(globalMessagesLog.length === 0) {
-            area.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin:auto; font-size:13px;">المحادثة فارغة تماماً. اكتب أول رسالة لبدء التفاعل الجماعي!</div>`;
-            return;
-        }
-
-        globalMessagesLog.forEach(msg => {
+        globalMessagesLog.forEach((msg, index) => {
             const row = document.createElement('div');
-            // فرز الاتجاه: إذا كانت الرسالة من الحساب الحالي تظهر بتصميم (self) وإلا تظهر (others)
             const isSelf = msg.senderName === currentSessionUser.name;
-            row.className = `msg-row ${isSelf ? 'self' : 'others'}`;
+            
+            // وسم تصنيفات الاستايل للملصق أو الرسالة العادية
+            let stickerClass = msg.isSticker ? ' sticker-msg' : '';
+            row.className = `msg-row ${isSelf ? 'self' : 'others'}${stickerClass}`;
 
             const senderDiv = document.createElement('div');
             senderDiv.className = 'msg-sender';
             senderDiv.innerText = `${msg.senderAvatar} ${msg.senderName}`;
+            row.appendChild(senderDiv);
 
             const bodyDiv = document.createElement('div');
             bodyDiv.className = 'msg-body';
             bodyDiv.innerText = msg.textBody;
-
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'msg-time';
-            timeDiv.innerText = msg.timestamp;
-
-            row.appendChild(senderDiv);
             row.appendChild(bodyDiv);
-            row.appendChild(timeDiv);
+
+            // تفعيل نظام الحجب التلقائي للمحتوى الحساس والدموي (NSFW)
+            if(msg.hasMedia) {
+                const mediaContainer = document.createElement('div');
+                mediaContainer.className = 'media-container';
+                
+                const img = document.createElement('img');
+                img.src = msg.mediaUrl;
+                mediaContainer.appendChild(img);
+
+                // فحص الكلمات الدليليلة للحجب
+                const sensitiveKeywords = ['دموي', 'حساس', 'nsfw', 'قتل', 'عنف', 'جنس', '🔞'];
+                let isSensitiveContent = sensitiveKeywords.some(keyword => msg.textBody.toLowerCase().includes(keyword));
+
+                if(isNsfwFilterActive && isSensitiveContent) {
+                    mediaContainer.classList.add('sensitive');
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = 'nsfw-overlay';
+                    overlay.id = `nsfw-cover-${index}`;
+                    
+                    const warningTitle = document.createElement('div');
+                    warningTitle.className = 'nsfw-title';
+                    warningTitle.innerText = "🔞 محتوى حساس أو دموي محجوب";
+                    
+                    const revealBtn = document.createElement('button');
+                    revealBtn.className = 'nsfw-btn';
+                    revealBtn.innerText = "عرض المحتوى المشوش";
+                    revealBtn.onclick = () => {
+                        mediaContainer.classList.remove('sensitive');
+                        overlay.style.display = 'none';
+                    };
+
+                    overlay.appendChild(warningTitle);
+                    overlay.appendChild(revealBtn);
+                    mediaContainer.appendChild(overlay);
+                }
+
+                row.appendChild(mediaContainer);
+            }
+
             area.appendChild(row);
         });
 
@@ -418,77 +434,84 @@
     function dispatchGroupMessage() {
         const input = document.getElementById('messageInputField');
         const text = input.value.trim();
-        if (!text) return; // منع حفظ النصوص الفارغة تماماً بالملي
+        if (!text) return; // منع حفظ النصوص الفارغة تماماً
 
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-
-        const newMsgObj = {
-            senderName: currentSessionUser.name,
-            senderAvatar: currentSessionUser.avatar,
-            textBody: text,
-            timestamp: timeString
-        };
-
-        globalMessagesLog.push(newMsgObj);
-        localStorage.setItem('nero_group_messages_history', JSON.stringify(globalMessagesLog));
-        
+        pushMessageObjectToStorage(text, false, null);
         input.value = '';
-        renderChatAreaUi();
         closeToolsMenu();
     }
 
-    function injectSystemNotification(text) {
+    function sendPredefinedSticker(emoji, label) {
+        // محاكاة تحويل الإيموجي لملصق فني حقيقي عبر مولد الصور ليعرض كملصق
+        const mockStickerUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(label)}?width=250&height=250&nologo=true&seed=42`;
+        pushMessageObjectToStorage(label, true, mockStickerUrl);
+        closeToolsMenu();
+    }
+
+    function handleCustomStickerUpload(input) {
+        const file = input.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            pushMessageObjectToStorage("ملصق مخصص تم رفعه 🖼️", true, e.target.result);
+        };
+        reader.readAsDataURL(file);
+        closeToolsMenu();
+    }
+
+    function pushMessageObjectToStorage(text, isSticker, mediaUrl) {
         const now = new Date();
         const timeString = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        globalMessagesLog.push({
-            senderName: "نظام المجموعة",
-            senderAvatar: "📢",
+
+        const msgObj = {
+            senderName: currentSessionUser.name,
+            senderAvatar: currentSessionUser.avatar,
             textBody: text,
-            timestamp: timeString
-        });
-        localStorage.setItem('nero_group_messages_history', JSON.stringify(globalMessagesLog));
+            timestamp: timeString,
+            isSticker: isSticker,
+            hasMedia: mediaUrl !== null,
+            mediaUrl: mediaUrl
+        };
+
+        globalMessagesLog.push(msgObj);
+        localStorage.setItem('nero_secure_messages', JSON.stringify(globalMessagesLog));
+        renderChatAreaUi();
     }
 
     function detectEnterKey(e) { if (e.key === 'Enter') dispatchGroupMessage(); }
-
     function toggleToolsMenu(e) {
         e.stopPropagation();
         const menu = document.getElementById('toolsMenu');
-        const shield = document.getElementById('clickShield');
         menu.classList.toggle('show');
-        shield.style.display = menu.classList.contains('show') ? 'block' : 'none';
+        document.getElementById('clickShield').style.display = menu.classList.contains('show') ? 'block' : 'none';
     }
-
     function closeToolsMenu() {
         document.getElementById('toolsMenu').classList.remove('show');
         document.getElementById('clickShield').style.display = 'none';
     }
 
-    function triggerMenuAction(phrase) {
-        document.getElementById('messageInputField').value = phrase;
-        dispatchGroupMessage();
+    function toggleSettingsModal(show) {
+        document.getElementById('settingsModal').style.display = show ? 'flex' : 'none';
     }
 
-    function switchAccountAction() {
-        document.getElementById('usernameField').value = '';
-        document.getElementById('accountModal').style.display = 'flex';
-        closeToolsMenu();
+    function toggleNsfwFilterRule(checked) {
+        isNsfwFilterActive = checked;
+        localStorage.setItem('nero_nsfw_rule', checked);
+        renderChatAreaUi();
     }
 
-    function clearGroupHistory() {
-        if(confirm("هل ترغبين بالتأكيد في تصفير الجروب وبدء جلسة محادثة فارغة وجديدة كلياً؟")) {
-            globalMessagesLog = [];
-            localStorage.removeItem('nero_group_messages_history');
-            renderChatAreaUi();
+    function triggerLogoutAction() {
+        if(confirm("هل تريدين بالتأكيد تسجيل الخروج وحذف الجلسة الحالية؟")) {
+            localStorage.removeItem('nero_secure_user');
+            location.reload();
         }
     }
 
     function updateGroupMembersCount() {
-        // حساب عدد الحسابات الفريدة التي شاركت بالدردشة بشكل تلقائي متميز
-        const senders = new Set(globalMessagesLog.map(m => m.senderName));
-        senders.add(currentSessionUser.name);
-        document.getElementById('groupCounter').innerText = `الأعضاء المشاركين في الجلسة: ${senders.size}`;
+        const uniqueUsers = new Set(globalMessagesLog.map(m => m.senderName));
+        if(currentSessionUser) uniqueUsers.add(currentSessionUser.name);
+        document.getElementById('groupCounter').innerText = `الأعضاء النشطين في الجروب: ${uniqueUsers.size}`;
     }
 </script>
 </body>
