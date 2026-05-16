@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERO AI HUB</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #0c0d10; color: #e2e8f0; margin: 0; padding: 15px; direction: rtl; text-align: center;}
+        .nero-app-core { max-width: 530px; margin: 0 auto; }
+        .app-top-bar h1 { color: #a855f7; font-size: 24px; margin-bottom: 5px; }
+        .app-top-bar p { color: #8e94a1; font-size: 13px; margin-bottom: 25px; }
+        .nero-tab-system { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
+        .nero-tab-btn { padding: 12px 20px; background: #1a1b24; border: 1px solid #2d2f3d; border-radius: 6px; color: #8e94a1; cursor: pointer; font-weight: 600; flex: 1; }
+        .nero-tab-btn.active { background: #a855f7; color: white; border-color: #a855f7; }
+        .nero-tab-content { display: none; }
+        .nero-tab-content.active { display: block; }
+        .nero-panel { background: #111218; padding: 22px; border-radius: 12px; border: 1px solid #2d2f3d; text-align: right; }
+        textarea { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #2d2f3d; background-color: #1a1b24; color: white; box-sizing: border-box; font-size: 14px; resize: vertical; }
+        .nero-btn { padding: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; }
+        .nero-btn-chat { background-color: #a855f7; }
+        .nero-btn-art { background-color: #ec4899; }
+        button:disabled { background-color: #4c4d57; cursor: not-allowed; opacity: 0.6; }
+        .nero-status { font-size: 13px; color: #8e94a1; margin-top: 15px; text-align: center; }
+        .nero-output { margin-top: 18px; border-top: 1px solid #2d2f3d; padding-top: 18px; font-size: 14px; color: #e2e8f0; white-space: pre-line; line-height: 1.6; }
+        #canvasArea img { max-width: 100%; border-radius: 8px; border: 2px solid #ec4899; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="nero-app-core">
+    <header class="app-top-bar">
+        <h1>✨ NERO AI HUB</h1>
+        <p>مساعدك الذكي للمحادثة الحرة والفن المفتوح</p>
+    </header>
+    <div class="nero-tab-system">
+        <button class="nero-tab-btn active" onclick="switchNeroTab(event, 'text-hub')">💬 Nero Chat</button>
+        <button class="nero-tab-btn" onclick="switchNeroTab(event, 'art-studio')">🎨 Nero Art</button>
+    </div>
+    <div id="text-hub" class="nero-tab-content active">
+        <div class="nero-panel">
+            <textarea id="chatInput" rows="4" placeholder="اسألي Nero AI أي شيء..."></textarea>
+            <button class="nero-btn nero-btn-chat" id="chatBtn" onclick="generateNeroText()">إرسال السؤال 🚀</button>
+            <div id="textStatus" class="nero-status">جاهز بانتظارك...</div>
+            <div class="nero-output" id="textOutput"></div>
+        </div>
+    </div>
+    <div id="art-studio" class="nero-tab-content">
+        <div class="nero-panel">
+            <textarea id="promptField" rows="4" placeholder="اكتبي وصف الصورة بالإنجليزية..."></textarea>
+            <button class="nero-btn nero-btn-art" id="drawBtn" onclick="generateNeroArt()">توليد ورسم اللوحة 🎨</button>
+            <div id="artStatus" class="nero-status">جاهز للرسم بدون قيود...</div>
+            <div class="nero-output" id="canvasArea"></div>
+        </div>
+    </div>
+</div>
+<script>
+function switchNeroTab(evt, tabName) {
+    let tabcontent = document.getElementsByClassName("nero-tab-content");
+    for (let i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+    let tablinks = document.getElementsByClassName("nero-tab-btn");
+    for (let i = 0; i < tablinks.length; i++) { tablinks[i].classList.remove("active"); }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
+async function generateNeroText() {
+    const query = document.getElementById('chatInput').value.trim();
+    const status = document.getElementById('textStatus');
+    const responseBox = document.getElementById('textOutput');
+    const btn = document.getElementById('chatBtn');
+    if (!query) return;
+    btn.disabled = true; status.innerText = "🧠 جاري معالجة طلبكِ..."; responseBox.innerText = "";
+    try {
+        const response = await puter.ai.chat(query);
+        status.innerText = "✅ الاستجابة الحالية:";
+        if (response && response.message && response.message.content) {
+            const contentArray = response.message.content;
+            responseBox.innerText = Array.isArray(contentArray) ? contentArray[0].text : contentArray;
+        } else { responseBox.innerText = response.text || response; }
+    } catch (error) { status.innerText = "❌ حدث خطأ."; } finally { btn.disabled = false; }
+}
+async function generateNeroArt() {
+    const prompt = document.getElementById('promptField').value.trim();
+    const status = document.getElementById('artStatus');
+    const canvas = document.getElementById('canvasArea');
+    const btn = document.getElementById('drawBtn');
+    if (!prompt) return;
+    btn.disabled = true; status.innerText = "⚡ جاري الرسم السحابي الحر..."; canvas.innerHTML = "";
+    try {
+        const uniqueRand = Math.floor(Math.random() * 9999999);
+        const imageUrl = `https://image.pollinations.ai/p/${encodeURIComponent(prompt)}?width=512&height=768&seed=${uniqueRand}&nologo=true&enhance=true`;
+        const freshImg = document.createElement('img');
+        freshImg.src = imageUrl;
+        freshImg.onload = function() { status.innerText = "🎉 تم توليد اللوحة:"; canvas.appendChild(freshImg); btn.disabled = false; };
+        freshImg.onerror = function() { status.innerText = "❌ فشل التحميل."; btn.disabled = false; };
+    } catch (error) { btn.disabled = false; }
+}
+</script>
+</body>
+</html>
