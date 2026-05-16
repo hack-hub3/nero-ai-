@@ -3,145 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nero AI - مساحتي الخاصة</title>
+    <title>Nero AI</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
-        :root { --bg: #0f1115; --panel: #16181d; --text: #e2e8f0; --primary: #a855f7; --accent: #ec4899; --border: #2d2f3d; }
-        body { font-family: system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        :root { --bg: #131314; --surface: #1e1f20; --text: #e3e3e3; --text-dim: #c4c7c5; --primary: #a8c7fa; --border: #444746; --user-msg: #334155; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* شريط التنقل العلوي */
-        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--panel); border-bottom: 1px solid var(--border); }
-        .top-nav h1 { margin: 0; font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 10px; }
-        .menu-btn { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+        /* الشريط العلوي */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); z-index: 10; }
+        .menu-btn, .new-btn { background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; transition: 0.2s; }
+        .menu-btn:hover, .new-btn:hover { background: var(--surface); }
         
-        /* القائمة الجانبية (للمحادثات) */
-        .sidebar { position: fixed; right: -300px; top: 0; width: 260px; height: 100%; background: var(--panel); border-left: 1px solid var(--border); transition: right 0.3s; z-index: 1000; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        .sidebar.open { right: 0; }
-        .close-sidebar { align-self: flex-start; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; margin-bottom: 20px; }
-        .new-chat-btn, .secret-chat-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .secret-chat-btn { background: #3f3f46; border: 1px dashed #71717a; }
-        .chat-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        .chat-item { padding: 10px; background: var(--bg); border-radius: 6px; cursor: pointer; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; border: 1px solid transparent; }
-        .chat-item.active { border-color: var(--primary); }
-        .chat-item.ephemeral { color: #facc15; }
+        /* زر اختيار النموذج (يحاكي لقطات الشاشة) */
+        .model-selector-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: none; color: var(--text-dim); font-size: 16px; font-weight: 500; cursor: pointer; padding: 8px 16px; border-radius: 20px; transition: 0.2s; }
+        .model-selector-btn:hover { background: var(--surface); color: var(--text); }
+        .model-selector-btn::after { content: '▼'; font-size: 10px; }
 
-        /* منطقة المحتوى */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); }
-        .tab { flex: 1; text-align: center; padding: 15px; cursor: pointer; color: #8e94a1; font-weight: bold; transition: 0.2s; }
-        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-        
-        .tab-body { flex: 1; display: none; flex-direction: column; padding: 15px; overflow-y: auto; }
-        .tab-body.active { display: flex; }
+        /* نافذة اختيار النموذج (Bottom Sheet) */
+        .model-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: var(--surface); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; box-sizing: border-box; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        .model-sheet.open { bottom: 0; }
+        .sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px auto; }
+        .model-option { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; }
+        .model-option:hover { background: rgba(255,255,255,0.05); }
+        .model-option.active { background: rgba(168, 199, 250, 0.1); }
+        .model-info h3 { margin: 0 0 4px 0; font-size: 16px; color: var(--text); }
+        .model-info p { margin: 0; font-size: 13px; color: var(--text-dim); }
+        .check-icon { color: var(--primary); font-size: 20px; display: none; }
+        .model-option.active .check-icon { display: block; }
+
+        /* القائمة الجانبية */
+        .sidebar { position: fixed; right: -320px; top: 0; width: 300px; height: 100%; background: var(--surface); transition: right 0.3s ease; z-index: 1000; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .sidebar.open { right: 0; }
+        .sidebar-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .search-bar { margin: 0 16px 16px 16px; padding: 12px 16px; background: var(--bg); border-radius: 24px; color: var(--text); border: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+        .search-bar input { background: transparent; border: none; color: white; outline: none; width: 100%; }
+        .chat-list { overflow-y: auto; flex: 1; padding: 0 8px; }
+        .chat-item { padding: 14px 16px; border-radius: 24px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 2px; color: var(--text-dim); }
+        .chat-item:hover { background: rgba(255,255,255,0.05); }
+        .chat-item.active { background: rgba(168, 199, 250, 0.1); color: var(--primary); font-weight: 500; }
 
         /* منطقة الدردشة */
-        .chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
-        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; }
-        .msg-user { background: var(--primary); align-self: flex-start; border-top-right-radius: 2px; }
-        .msg-ai { background: var(--panel); align-self: flex-end; border-top-left-radius: 2px; border: 1px solid var(--border); }
+        .main-chat { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; scroll-behavior: smooth; }
+        .message-row { display: flex; width: 100%; }
+        .message-row.user { justify-content: flex-start; } /* المستخدم يمين/يسار حسب اللغة */
+        .message-row.ai { justify-content: flex-end; }
         
-        /* أدوات الإدخال */
-        .input-area { display: flex; flex-direction: column; gap: 10px; background: var(--bg); padding-top: 10px; }
-        .model-selector { padding: 8px; background: var(--panel); border: 1px solid var(--border); color: white; border-radius: 6px; outline: none; }
-        .input-row { display: flex; gap: 8px; }
-        input[type="text"] { flex: 1; padding: 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--panel); color: white; outline: none; font-size: 15px; }
-        .send-btn { background: var(--primary); color: white; border: none; width: 50px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .bubble { max-width: 85%; padding: 12px 16px; font-size: 15px; line-height: 1.6; border-radius: 24px; word-wrap: break-word; }
+        .bubble.user { background: var(--surface); color: var(--text); border-bottom-right-radius: 4px; }
+        .bubble.ai { background: transparent; color: var(--text); border-bottom-left-radius: 4px; }
         
-        /* الرسم */
-        .art-input { border-radius: 12px !important; margin-bottom: 10px; }
-        .art-btn { background: var(--accent); width: 100%; border-radius: 12px; padding: 15px; }
-        #canvasArea { text-align: center; margin-top: 20px; }
-        #canvasArea img { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .status { text-align: center; color: #8e94a1; font-size: 13px; margin-top: 10px; }
+        .canvas-container img { max-width: 100%; border-radius: 16px; margin-top: 10px; }
+
+        /* منطقة الإدخال */
+        .input-container { padding: 16px; background: var(--bg); }
+        .input-box { display: flex; align-items: center; background: var(--surface); border-radius: 30px; padding: 8px 16px; gap: 12px; border: 1px solid var(--border); transition: border-color 0.3s; }
+        .input-box:focus-within { border-color: var(--border); background: #282a2c; }
+        .action-btn { background: none; border: none; font-size: 20px; color: var(--text-dim); cursor: pointer; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+        .action-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .input-box input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 15px; outline: none; padding: 8px 0; }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; opacity: 0; transition: opacity 0.3s; }
+        .overlay.show { display: block; opacity: 1; }
+        .status-text { text-align: center; font-size: 12px; color: var(--text-dim); height: 15px; margin-top: 8px; }
     </style>
 </head>
 <body>
 
-    <div class="top-nav">
+    <div class="top-bar">
         <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-        <h1>✨ مساحتي</h1>
-        <div style="width: 24px;"></div>
+        <button class="model-selector-btn" id="currentModelDisplay" onclick="toggleModelSheet()">Nero V2 ✨</button>
+        <button class="new-btn" onclick="createNewChat()">📝</button>
+    </div>
+
+    <div class="model-sheet" id="modelSheet">
+        <div class="sheet-handle" onclick="toggleModelSheet()"></div>
+        <div class="model-option active" id="opt-v2" onclick="selectModel('v2')">
+            <div class="model-info">
+                <h3>Nero V2 (الاحترافي) ✨</h3>
+                <p>مهارات متقدمة، يقدم حلولاً للمشاكل المعقدة.</p>
+            </div>
+            <div class="check-icon">✓</div>
+        </div>
+        <div class="model-option" id="opt-v1" onclick="selectModel('v1')">
+            <div class="model-info">
+                <h3>Nero V1 (السريع) ⚡</h3>
+                <p>كفاءة أقل، لكنه يجيب بسرعة للمهام البسيطة.</p>
+            </div>
+            <div class="check-icon">✓</div>
+        </div>
     </div>
 
     <div class="sidebar" id="sidebar">
-        <button class="close-sidebar" onclick="toggleSidebar()">✖</button>
-        <button class="new-chat-btn" onclick="createNewChat()">+ محادثة جديدة</button>
-        <button class="secret-chat-btn" onclick="createSecretChat()">⏱ محادثة مؤقتة (15 دقيقة)</button>
+        <div class="sidebar-header">
+            <h2 style="margin:0; font-size:18px;">المحادثات</h2>
+            <button class="menu-btn" onclick="toggleSidebar()">✖</button>
+        </div>
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" placeholder="البحث عن المحادثات...">
+        </div>
+        <div style="padding: 0 16px; margin-bottom: 10px;">
+            <div class="chat-item" onclick="createNewChat()" style="background: rgba(255,255,255,0.05);">
+                📝 محادثة جديدة
+            </div>
+            <div class="chat-item ephemeral-btn" onclick="createNewChat(true)" style="color: #facc15;">
+                ⏱ محادثة مؤقتة (15 دقيقة)
+            </div>
+        </div>
         <div class="chat-list" id="chatList"></div>
     </div>
 
-    <div class="main-content">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('chat')">الدردشة</div>
-            <div class="tab" onclick="switchTab('art')">الرسم</div>
-        </div>
+    <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
 
-        <div class="tab-body active" id="chatTab">
-            <div class="chat-box" id="chatBox">
-                </div>
-            <div class="input-area">
-                <select class="model-selector" id="modelSelect">
-                    <select class="model-selector" id="modelSelect">
-                    <option value="nero">المحرك الأساسي (Nero)</option>
-                    <option value="gemini">محرك Gemini (يتطلب مفتاح)</option>
-                </select>
-                <div class="input-row">
-                    <input type="text" id="userInput" placeholder="اكتبي رسالتك هنا..." onkeypress="handleEnter(event)">
-                    <button class="send-btn" onclick="sendMessage()">🚀</button>
-                </div>
-                <div class="status" id="chatStatus"></div>
-            </div>
-        </div>
+    <div class="main-chat" id="chatBox"></div>
 
-        <div class="tab-body" id="artTab">
-            <input type="text" id="artInput" class="art-input" placeholder="ماذا تريدين أن أرسم لكِ؟ (بالإنجليزي)">
-            <button class="send-btn art-btn" onclick="drawPicture()">ارسم الآن 🎨</button>
-            <div class="status" id="artStatus">جاهز للرسم!</div>
-            <div id="canvasArea"></div>
+    <div class="input-container">
+        <div class="input-box">
+            <button class="action-btn" onclick="drawPicture()" title="توليد صورة">🎨</button>
+            <input type="text" id="userInput" placeholder="اكتب رسالة لـ Nero..." onkeypress="handleEnter(event)">
+            <button class="action-btn send-btn" onclick="sendMessage()" style="color: var(--primary);">🚀</button>
         </div>
+        <div class="status-text" id="chatStatus"></div>
     </div>
 
-    <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="toggleSidebar()"></div>
-
 <script>
-    // --- نظام الذاكرة والمحادثات ---
-    let chats = JSON.parse(localStorage.getItem('nero_chats')) || [];
-    let currentChatId = null;
-    let geminiApiKey = localStorage.getItem('gemini_api_key') || "";
+    // --- نظام التشفير المحلي (XOR + Base64) لحماية المحادثات ---
+    const ENCRYPTION_KEY = "NeroSecretKey2026";
+    
+    function encryptData(dataObj) {
+        try {
+            const str = encodeURIComponent(JSON.stringify(dataObj));
+            let result = '';
+            for(let i=0; i<str.length; i++) {
+                result += String.fromCharCode(str.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+            }
+            return btoa(result);
+        } catch(e) { return ""; }
+    }
 
-    function saveChats() {
-        localStorage.setItem('nero_chats', JSON.stringify(chats));
+    function decryptData(encryptedStr) {
+        try {
+            let str = atob(encryptedStr);
+            let result = '';
+            for(let i=0; i<str.length; i++) {
+                result += String.fromCharCode(str.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+            }
+            return JSON.parse(decodeURIComponent(result));
+        } catch(e) { return null; }
+    }
+
+    // --- إدارة البيانات والمحركات ---
+    let chats = [];
+    let currentChatId = null;
+    let selectedModel = localStorage.getItem('nero_model') || 'v2';
+    let geminiApiKey = localStorage.getItem('nero_api_key') || "";
+
+    function loadSavedChats() {
+        const encrypted = localStorage.getItem('nero_secure_chats');
+        if (encrypted) {
+            const decrypted = decryptData(encrypted);
+            if (decrypted && Array.isArray(decrypted)) {
+                chats = decrypted;
+                return;
+            }
+        }
+        chats = [];
+    }
+
+    function saveChatsLocally() {
+        const encrypted = encryptData(chats);
+        localStorage.setItem('nero_secure_chats', encrypted);
         renderChatList();
     }
 
+    // --- واجهة المستخدم ---
     function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        if (sidebar.classList.contains('open')) {
-            sidebar.classList.remove('open');
-            overlay.style.display = 'none';
-        } else {
-            sidebar.classList.add('open');
-            overlay.style.display = 'block';
-            cleanupSecretChats(); // تنظيف المحادثات المؤقتة المنتهية
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('overlay');
+        const isOpen = sb.classList.contains('open');
+        
+        if (isOpen) { closeAllPanels(); } 
+        else {
+            sb.classList.add('open');
+            ov.classList.add('show');
+            document.getElementById('modelSheet').classList.remove('open');
+            cleanupSecretChats();
         }
     }
 
-    function switchTab(tab) {
-        document.getElementById('chatTab').classList.remove('active');
-        document.getElementById('artTab').classList.remove('active');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        
-        document.getElementById(tab + 'Tab').classList.add('active');
-        event.currentTarget.classList.add('active');
+    function toggleModelSheet() {
+        const sheet = document.getElementById('modelSheet');
+        const ov = document.getElementById('overlay');
+        if (sheet.classList.contains('open')) { closeAllPanels(); } 
+        else {
+            sheet.classList.add('open');
+            ov.classList.add('show');
+            document.getElementById('sidebar').classList.remove('open');
+        }
     }
 
-    // إدارة المحادثات المؤقتة
+    function closeAllPanels() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('modelSheet').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+    }
+
+    function selectModel(model) {
+        selectedModel = model;
+        localStorage.setItem('nero_model', model);
+        document.getElementById('opt-v1').classList.remove('active');
+        document.getElementById('opt-v2').classList.remove('active');
+        document.getElementById(`opt-${model}`).classList.add('active');
+        
+        document.getElementById('currentModelDisplay').innerText = model === 'v2' ? 'Nero V2 ✨' : 'Nero V1 ⚡';
+        setTimeout(closeAllPanels, 200);
+    }
+
+    // --- نظام المحادثات ---
     function cleanupSecretChats() {
         const now = Date.now();
-        chats = chats.filter(c => !c.isSecret || (now - c.createdAt < 15 * 60 * 1000)); // 15 دقيقة
-        saveChats();
-        if(currentChatId && !chats.find(c => c.id === currentChatId)) createNewChat();
+        chats = chats.filter(c => !c.isSecret || (now - c.createdAt < 15 * 60 * 1000));
+        saveChatsLocally();
     }
 
     function createNewChat(isSecret = false) {
@@ -154,17 +236,15 @@
         };
         chats.unshift(newChat);
         currentChatId = newChat.id;
-        saveChats();
+        saveChatsLocally();
         renderMessages();
-        toggleSidebar();
+        closeAllPanels();
     }
-
-    function createSecretChat() { createNewChat(true); }
 
     function loadChat(id) {
         currentChatId = id;
         renderMessages();
-        toggleSidebar();
+        closeAllPanels();
         renderChatList();
     }
 
@@ -173,8 +253,8 @@
         list.innerHTML = '';
         chats.forEach(chat => {
             const div = document.createElement('div');
-            div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''} ${chat.isSecret ? 'ephemeral' : ''}`;
-            div.innerText = chat.title;
+            div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+            div.innerHTML = `💬 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${chat.title}</span>`;
             div.onclick = () => loadChat(chat.id);
             list.appendChild(div);
         });
@@ -186,18 +266,33 @@
         const chat = chats.find(c => c.id === currentChatId);
         if (!chat) return;
 
+        if (chat.messages.length === 0) {
+            box.innerHTML = `<div style="text-align:center; color:var(--text-dim); margin-top:50px; font-size:24px;">✨<br><span style="font-size:16px;">كيف يمكنني مساعدتك اليوم؟</span></div>`;
+            return;
+        }
+
         chat.messages.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = `message ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`;
-            div.innerText = msg.content;
-            box.appendChild(div);
+            const row = document.createElement('div');
+            row.className = `message-row ${msg.role === 'user' ? 'user' : 'ai'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${msg.role === 'user' ? 'user' : 'ai'}`;
+            
+            if(msg.isImage) {
+                bubble.innerHTML = `<div class="canvas-container"><img src="${msg.content}"></div>`;
+            } else {
+                bubble.innerText = msg.content;
+            }
+            
+            row.appendChild(bubble);
+            box.appendChild(row);
         });
         box.scrollTop = box.scrollHeight;
     }
 
+    // --- الإرسال والمعالجة ---
     function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
 
-    // --- إرسال الرسائل ---
     async function sendMessage() {
         const input = document.getElementById('userInput');
         const text = input.value.trim();
@@ -206,40 +301,36 @@
         if (!currentChatId || !chats.find(c=>c.id === currentChatId)) createNewChat();
         const chat = chats.find(c => c.id === currentChatId);
         
-        // إذا كانت أول رسالة، نجعلها العنوان
-        if (chat.messages.length === 0 && !chat.isSecret) chat.title = text.substring(0, 20) + "...";
+        if (chat.messages.length === 0 && !chat.isSecret) chat.title = text.substring(0, 25) + "...";
 
-        // إضافة رسالة المستخدم للذاكرة
         chat.messages.push({ role: 'user', content: text });
         input.value = '';
         renderMessages();
         
         const status = document.getElementById('chatStatus');
-        status.innerText = "ثواني...";
+        status.innerText = "جاري التفكير...";
         
-        const model = document.getElementById('modelSelect').value;
         let aiResponseText = "";
 
         try {
-            if (model === 'nero') {
-                // محرك نيرو (Puter) - نرسل له سياق المحادثة السابق ليتذكر!
-                const history = chat.messages.map(m => ({
+            if (selectedModel === 'v1') {
+                // Nero V1 (Puter - سريع)
+                const history = chat.messages.filter(m => !m.isImage).map(m => ({
                     role: m.role === 'user' ? 'user' : 'assistant',
                     content: m.content
                 }));
                 const response = await puter.ai.chat(history);
                 aiResponseText = response?.message?.content[0]?.text || response?.text || response;
 
-            } else if (model === 'gemini') {
-                // محرك جیمیني
+            } else {
+                // Nero V2 (Gemini - احترافي)
                 if (!geminiApiKey) {
-                    geminiApiKey = prompt("أدخلي مفتاح API الخاص بـ Gemini (سيتم حفظه في جهازك فقط):");
-                    if(geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
-                    else throw new Error("لم يتم إدخال مفتاح.");
+                    geminiApiKey = prompt("Nero V2 يحتاج تفعيل لمرة واحدة. أدخلي مفتاح Google AI الخاص بك (يُحفظ مشفراً بجهازك):");
+                    if(geminiApiKey) localStorage.setItem('nero_api_key', geminiApiKey);
+                    else throw new Error("تم الإلغاء.");
                 }
                 
-                // تحويل الذاكرة لصيغة يفهمها جیمیني
-                const contents = chat.messages.map(m => ({
+                const contents = chat.messages.filter(m => !m.isImage).map(m => ({
                     role: m.role === 'user' ? 'user' : 'model',
                     parts: [{ text: m.content }]
                 }));
@@ -250,45 +341,66 @@
                     body: JSON.stringify({ contents: contents })
                 });
                 const resData = await req.json();
-                if(resData.error) { geminiApiKey = ""; localStorage.removeItem('gemini_api_key'); throw new Error(resData.error.message); }
+                if(resData.error) { geminiApiKey = ""; localStorage.removeItem('nero_api_key'); throw new Error(resData.error.message); }
                 aiResponseText = resData.candidates[0].content.parts[0].text;
             }
 
             chat.messages.push({ role: 'ai', content: aiResponseText });
             status.innerText = "";
-            saveChats();
+            saveChatsLocally();
             renderMessages();
 
         } catch (error) {
-            status.innerText = "حدث خطأ، جربي مرة أخرى أو تأكدي من المفتاح.";
-            chat.messages.pop(); // حذف السؤال من الذاكرة إذا فشل
+            status.innerText = "فشل الإرسال. تأكدي من الاتصال أو المفتاح.";
+            chat.messages.pop(); // حذف الرسالة من الذاكرة إذا فشلت
         }
     }
 
-    // --- توليد الصور السريع ---
+    // --- توليد الصور بضغطة زر ---
     function drawPicture() {
-        const promptText = document.getElementById('artInput').value.trim();
-        const status = document.getElementById('artStatus');
-        const canvas = document.getElementById('canvasArea');
-        if (!promptText) return;
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if (!text) {
+            document.getElementById('chatStatus').innerText = "اكتبي وصف الصورة في مربع النص أولاً ثم اضغطي 🎨";
+            return;
+        }
 
-        status.innerText = "برسمها لكِ الآن...";
-        canvas.innerHTML = "";
+        if (!currentChatId || !chats.find(c=>c.id === currentChatId)) createNewChat();
+        const chat = chats.find(c => c.id === currentChatId);
         
-        // إزالة الفلاتر المعقدة لتسريع الرسم جداً
+        if (chat.messages.length === 0 && !chat.isSecret) chat.title = "🎨 " + text.substring(0, 20);
+
+        chat.messages.push({ role: 'user', content: text });
+        input.value = '';
+        renderMessages();
+
+        document.getElementById('chatStatus').innerText = "جاري رسم اللوحة...";
+        
         const unique = Math.floor(Math.random() * 100000);
-        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&nologo=true&seed=${unique}`;
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?width=800&height=800&nologo=true&seed=${unique}`;
         
-        const img = document.createElement('img');
-        img.src = imgUrl;
-        img.onload = () => { status.innerText = "جاهزة!"; canvas.appendChild(img); };
-        img.onerror = () => { status.innerText = "لم أتمكن من رسمها، جربي وصفاً آخر."; };
+        // محاكاة تأخير التحميل
+        setTimeout(() => {
+            chat.messages.push({ role: 'ai', content: imgUrl, isImage: true });
+            document.getElementById('chatStatus').innerText = "";
+            saveChatsLocally();
+            renderMessages();
+        }, 1500);
     }
 
-    // تهيئة أولية
+    // --- التهيئة عند فتح التطبيق ---
+    loadSavedChats();
     cleanupSecretChats();
-    if(chats.length === 0) createNewChat();
-    else { currentChatId = chats[0].id; renderChatList(); renderMessages(); }
+    selectModel(selectedModel); // تهيئة العرض
+
+    if (chats.length === 0) {
+        createNewChat();
+    } else {
+        // الدخول المباشر لأحدث محادثة
+        currentChatId = chats[0].id;
+        renderMessages();
+        renderChatList();
+    }
 
 </script>
 </body>
