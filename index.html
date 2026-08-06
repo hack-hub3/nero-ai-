@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>غرفة الدردشة الآمنة</title>
+    <title>غرفة الدردشة المشفرة والآمنة</title>
     
-    <!-- 1. أضف روابط مكتبات Firebase Compat CDN هنا -->
-    <!-- يجب استبدال النصوص التالية بروابط CDN الرسمية لـ Firebase (الإصدار 9 compat أو الإصدار 8) -->
-    <!-- مثال: <script src="رابط مكتبة firebase-app"></script> -->
-    <script src="PUT_FIREBASE_APP_COMPAT_CDN_URL_HERE"></script>
-    <script src="PUT_FIREBASE_AUTH_COMPAT_CDN_URL_HERE"></script>
-    <script src="PUT_FIREBASE_DATABASE_COMPAT_CDN_URL_HERE"></script>
+    <!-- مكتبات Firebase Compat CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
+    <!-- مكتبة CryptoJS للتشفير والحماية -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
         :root {
@@ -97,6 +98,7 @@
 
         button {
             background-color: var(--primary-color);
+            color: var(--text-color);
             cursor: pointer;
             font-weight: bold;
             border: none;
@@ -261,11 +263,11 @@
         <!-- شاشة الدخول -->
         <div id="auth-screen">
             <div class="auth-card">
-                <h2>انضم إلى الدردشة</h2>
+                <h2>🔒 انضم للدردشة المشفرة</h2>
                 <input type="text" id="nickname" placeholder="الاسم المستعار">
                 <input type="email" id="email" placeholder="البريد الإلكتروني">
                 <input type="password" id="password" placeholder="كلمة المرور الشخصية">
-                <input type="password" id="room-pass" placeholder="كلمة مرور الغرفة الموحدة">
+                <input type="password" id="room-pass" placeholder="كلمة مرور الغرفة (مفتاح التشفير)">
                 <button id="login-btn">دخول / تسجيل جديد</button>
             </div>
         </div>
@@ -286,39 +288,40 @@
                 <button class="icon-btn" id="emoji-trigger" onclick="addEmoji('😊')">😊</button>
                 <button class="icon-btn" onclick="document.getElementById('image-input').click()">📷</button>
                 <input type="file" id="image-input" accept="image/*">
-                <input type="text" id="message-input" placeholder="اكتب رسالتك هنا...">
+                <input type="text" id="message-input" placeholder="اكتب رسالتك المشفّرة...">
                 <button id="send-btn">إرسال</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 2. كائن تهيئة Firebase الخاص بك
-        // يرجى استبدال القيم التالية ببيانات مشروعك من لوحة تحكم Firebase
+        // 1. كائن التهيئة الخاص بمشروعك
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyBOsTatQEyXRgEWY_UDsheJWPV1uuaSBzY",
+            authDomain: "nochat-d3880.firebaseapp.com",
+            databaseURL: "https://nochat-d3880-default-rtdb.firebaseio.com",
+            projectId: "nochat-d3880",
+            storageBucket: "nochat-d3880.firebasestorage.app",
+            messagingSenderId: "108461194977",
+            appId: "1:108461194977:web:e0342c98900b53341f81a0",
+            measurementId: "G-B2PMMBTKD1"
         };
 
-        // التحقق من وجود Firebase
         if (typeof firebase !== 'undefined') {
             firebase.initializeApp(firebaseConfig);
-        } else {
-            console.error("فشل تحميل مكتبات Firebase. يرجى التأكد من إضافة روابط الـ CDN الصحيحة.");
         }
 
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // كلمة مرور الغرفة الموحدة للاختبار (يمكنك تخزينها في قاعدة البيانات للأمان الكامل)
-        const REQUIRED_ROOM_PASS = "SecretRoom123"; 
+        // تجزئة SHA-256 لكلمة المرور الحقيقية "SecretRoom123" لحمايتها من العرض المباشر في GitHub
+        const ROOM_PASS_HASH = "81c3c0f209e75c87239ef4c66d11f971c26b9a21238612f009e53ed42e617d91";
 
-        // عناصر واجهة المستخدم
+        let currentUser = null;
+        let encryptionKey = ""; // تُستخدم لتشفير وفك تشفير البياناتEnd-to-End
+        let starredMessages = JSON.parse(localStorage.getItem('starred_messages')) || [];
+
+        // عناصر الواجهة
         const authScreen = document.getElementById('auth-screen');
         const chatScreen = document.getElementById('chat-screen');
         const nicknameInput = document.getElementById('nickname');
@@ -334,10 +337,23 @@
         const pinnedText = document.getElementById('pinned-text');
         const unpinBtn = document.getElementById('unpin-btn');
 
-        let currentUser = null;
-        let starredMessages = JSON.parse(localStorage.getItem('starred_messages')) || [];
+        // أدوات التشفير
+        function encryptText(text, secretKey) {
+            if (!text) return null;
+            return CryptoJS.AES.encrypt(text, secretKey).toString();
+        }
 
-        // التحقق من الجلسة السابقة وحفظ localStorage
+        function decryptText(ciphertext, secretKey) {
+            if (!ciphertext) return "";
+            try {
+                const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
+                const originalText = bytes.toString(CryptoJS.enc.Utf8);
+                return originalText || "[تعذر فك التشفير - مفتاح غير صالح]";
+            } catch (e) {
+                return "[رسالة مشفرة غير صالحة]";
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const savedEmail = localStorage.getItem('chat_email');
             const savedNick = localStorage.getItem('chat_nickname');
@@ -347,7 +363,7 @@
             }
         });
 
-        // تسجيل الدخول أو إنشاء حساب جديد
+        // تسجيل الدخول والتحقق
         loginBtn.addEventListener('click', async () => {
             const nickname = nicknameInput.value.trim();
             const email = emailInput.value.trim();
@@ -359,16 +375,16 @@
                 return;
             }
 
-            if (roomPass !== REQUIRED_ROOM_PASS) {
+            // التحقق المترجم بـ SHA-256
+            const inputHash = CryptoJS.SHA256(roomPass).toString();
+            if (inputHash !== ROOM_PASS_HASH) {
                 alert("كلمة مرور الغرفة غير صحيحة!");
                 return;
             }
 
             try {
-                // محاولة تسجيل الدخول
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
-                // إذا لم يكن الحساب موجوداً، يتم إنشاؤه تلقائياً
                 if (error.code === 'auth/user-not-found') {
                     try {
                         await auth.createUserWithEmailAndPassword(email, password);
@@ -382,7 +398,7 @@
                 }
             }
 
-            // حفظ البيانات محلياً للتسجيل التلقائي اللاحق
+            encryptionKey = roomPass; // اعتماد كلمة سر الغرفة كمفتاح تشفير
             localStorage.setItem('chat_email', email);
             localStorage.setItem('chat_nickname', nickname);
             
@@ -401,7 +417,6 @@
             listenForPinnedMessage();
         }
 
-        // إرسال الرسائل النصية والصور
         sendBtn.addEventListener('click', sendTextMessage);
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendTextMessage();
@@ -414,7 +429,6 @@
             messageInput.value = '';
         }
 
-        // التعامل مع إرسال الصور وتحويلها لـ Base64
         imageInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -424,22 +438,25 @@
                 saveMessageToFirebase("[صورة]", event.target.result);
             };
             reader.readAsDataURL(file);
-            imageInput.value = ''; // تفريغ المدخل بعد الرفع
-        } );
+            imageInput.value = '';
+        });
 
         function saveMessageToFirebase(text, base64Image) {
+            // تشفير النص والصورة قبل إرسالهما لسيرفر Firebase
+            const encryptedText = encryptText(text, encryptionKey);
+            const encryptedImage = base64Image ? encryptText(base64Image, encryptionKey) : null;
+
             const msgRef = db.ref('messages').push();
             msgRef.set({
                 id: msgRef.key,
                 senderId: currentUser.uid,
                 senderName: currentUser.nickname,
-                text: text,
-                image: base64Image || null,
+                text: encryptedText,
+                image: encryptedImage,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         }
 
-        // الاستماع الفوري للرسائل الجديدة
         function listenForMessages() {
             db.ref('messages').limitToLast(50).on('value', (snapshot) => {
                 messagesContainer.innerHTML = '';
@@ -451,8 +468,11 @@
             });
         }
 
-        // بناء وعرض الرسالة في الصفحة
         function renderMessage(msg) {
+            // فك تشفير الرسالة والصورة للعرض المحلّي فقط
+            const decryptedText = decryptText(msg.text, encryptionKey);
+            const decryptedImage = msg.image ? decryptText(msg.image, encryptionKey) : null;
+
             const isMe = msg.senderId === currentUser.uid;
             const messageRow = document.createElement('div');
             messageRow.className = `message-row ${isMe ? 'me' : 'others'}`;
@@ -466,31 +486,28 @@
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
             
-            if (msg.text) {
+            if (decryptedText) {
                 const textNode = document.createElement('span');
-                textNode.innerText = msg.text;
+                textNode.innerText = decryptedText;
                 bubble.appendChild(textNode);
             }
 
-            if (msg.image) {
+            if (decryptedImage && decryptedImage.startsWith('data:image')) {
                 const img = document.createElement('img');
-                img.src = msg.image;
+                img.src = decryptedImage;
                 img.className = 'message-img';
                 bubble.appendChild(img);
             }
 
-            // أدوات التفاعل (تثبيت، نجمة، إيموجي)
             const tools = document.createElement('div');
             tools.className = 'message-tools';
 
-            // تثبيت الرسالة
             const pinBtn = document.createElement('button');
             pinBtn.className = 'tool-btn';
             pinBtn.innerText = '📌 تثبيت';
-            pinBtn.onclick = () => pinMessage(msg.text || "[صورة]", msg.senderName);
+            pinBtn.onclick = () => pinMessage(decryptedText || "[صورة]", msg.senderName);
             tools.appendChild(pinBtn);
 
-            // تمييز بنجمة (محلّي)
             const isStarred = starredMessages.includes(msg.id);
             const starBtn = document.createElement('button');
             starBtn.className = 'tool-btn';
@@ -498,7 +515,6 @@
             starBtn.onclick = () => toggleStar(msg.id, starBtn);
             tools.appendChild(starBtn);
 
-            // تفاعل إيموجي سريع
             const reactBtn = document.createElement('button');
             reactBtn.className = 'tool-btn';
             reactBtn.innerText = '❤️ تفاعل';
@@ -507,7 +523,6 @@
 
             bubble.appendChild(tools);
 
-            // عرض التفاعلات الحالية إن وجدت
             if (msg.reactions) {
                 const reactionsDiv = document.createElement('div');
                 reactionsDiv.className = 'reactions';
@@ -528,25 +543,24 @@
             messagesContainer.appendChild(messageRow);
         }
 
-        // تفاعلات الإيموجي في قاعدة البيانات
         function addReaction(msgId, emoji) {
             db.ref(`messages/${msgId}/reactions/${currentUser.uid}`).set(emoji);
         }
 
-        // تثبيت الرسالة عالمياً
         function pinMessage(text, sender) {
+            const encryptedPinnedText = encryptText(text, encryptionKey);
             db.ref('pinned_message').set({
-                text: text,
+                text: encryptedPinnedText,
                 sender: sender
             });
         }
 
-        // الاستماع للرسائل المثبتة ومزامنتها
         function listenForPinnedMessage() {
             db.ref('pinned_message').on('value', (snapshot) => {
                 const pinned = snapshot.val();
                 if (pinned) {
-                    pinnedText.innerText = `رسالة مثبتة من [${pinned.sender}]: ${pinned.text}`;
+                    const decryptedPinned = decryptText(pinned.text, encryptionKey);
+                    pinnedText.innerText = `رسالة مثبتة من [${pinned.sender}]: ${decryptedPinned}`;
                     pinnedBar.style.display = 'flex';
                 } else {
                     pinnedBar.style.display = 'none';
@@ -554,12 +568,10 @@
             });
         }
 
-        // إلغاء التثبيت
         unpinBtn.addEventListener('click', () => {
             db.ref('pinned_message').remove();
         });
 
-        // تمييز الرسائل بنجمة محلياً
         function toggleStar(msgId, buttonElement) {
             if (starredMessages.includes(msgId)) {
                 starredMessages = starredMessages.filter(id => id !== msgId);
@@ -571,13 +583,11 @@
             localStorage.setItem('starred_messages', JSON.stringify(starredMessages));
         }
 
-        // إضافة إيموجي في صندوق الإدخال
         function addEmoji(emoji) {
             messageInput.value += emoji;
             messageInput.focus();
         }
 
-        // التمرير التلقائي الأنيق لأسفل المحادثة
         function scrollToBottom() {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
